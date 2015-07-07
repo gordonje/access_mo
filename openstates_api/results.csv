@@ -1,0 +1,110 @@
+date,action,type,related_entities,actor
+2013-12-01 00:00:00,Prefiled,[u'other'],[],upper
+2014-01-08 00:00:00,S First Read--SB 493-Pearce,[u'bill:reading:1'],[],upper
+2014-01-09 00:00:00,Second Read and Referred S Education Committee,"[u'bill:reading:2', u'committee:referred']",[],upper
+2014-01-22 00:00:00,Hearing Scheduled But Not Heard S Education Committee,[u'other'],[],upper
+2014-01-29 00:00:00,Hearing Conducted S Education Committee,[u'other'],[],upper
+2014-02-20 00:00:00,"SCS Voted Do Pass (w/SCS SBs 493, 485, 495, 516, 534, 545, 595, 616 & 624) S Education Committee - 4627S.06C",[u'other'],[],upper
+2014-02-24 00:00:00,Reported from S Education Committee to Floor w/SCS,[u'other'],[],upper
+2014-02-25 00:00:00,SA 1 to SCS S offered & adopted (Nasheed)--(4627S06.14S),[u'other'],[],upper
+2014-02-25 00:00:00,Bill Placed on Informal Calendar,[u'other'],[],upper
+2014-02-25 00:00:00,SA 2 to SCS S offered (Pearce)--(4627S06.06S),[u'other'],[],upper
+2014-02-25 00:00:00,SSA 1 for SA 2 to SCS S offered (Emery)--(4627S06.29S),[u'other'],[],upper
+2014-02-25 00:00:00,SA 1 to SSA 1 for SA 2 to SCS S offered & adopted (Dempsey)--(4627S06.31S),[u'other'],[],upper
+2014-02-25 00:00:00,"SSA 1 for SA 2 to SCS, as amended, S adopted",[u'bill:passed'],[],upper
+2014-02-25 00:00:00,SA 3 to SCS S offered (Holsman)--(4627S06.16S),[u'other'],[],upper
+2014-02-25 00:00:00,SSA 1 for SA 3 to SCS S offered (Dempsey)--(4627S06.20S),[u'other'],[],upper
+2014-02-25 00:00:00,SA 1 to SSA 1 for SA 3 to SCS S offered & defeated (Holsman)--(4627S06.36S),[u'other'],[],upper
+2014-02-25 00:00:00,SSA 1 for SA 3 to SCS S withdrawn,[u'other'],[],upper
+2014-02-25 00:00:00,SSA 2 for SA 3 to SCS S offered (Dempsey)--(4627S06.40S),[u'other'],[],upper
+2014-02-25 00:00:00,SA 1 to SSA 2 for SA 3 to SCS S offered & adopted (Chappelle-Nadal)--(4627S06.43S),[u'other'],[],upper
+2014-02-25 00:00:00,SA 2 to SSA 2 for SA 3 to SCS S offered & defeated (Pearce)--(4627S06.41S),[u'other'],[],upper
+2014-02-25 00:00:00,"SSA 2 for SA 3 to SCS, as amended, S adopted",[u'bill:passed'],[],upper
+2014-02-25 00:00:00,Bill Placed on Informal Calendar,[u'other'],[],upper
+2014-02-26 00:00:00,SA 4 to SCS S offered & adopted (Schaefer)--(4627S06.47S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 5 to SCS S offered & adopted (Lager)--(8000S14.01S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 6 to SCS S offered & withdrawn (Lager)--(8002S14.01S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 7 to SCS S offered (Pearce)--(4627S06.52S),[u'other'],[],upper
+2014-02-26 00:00:00,Bill Placed on Informal Calendar,[u'other'],[],upper
+2014-02-26 00:00:00,SA 7 to SCS S adopted,[u'bill:passed'],[],upper
+2014-02-26 00:00:00,SA 8 to SCS S offered & defeated (Emery)--(4627S06.18S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 9 to SCS S offered & adopted (Schmitt)--(4627S06.54S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 10 to SCS S offered & Ruled out of order (Keaveny)--(4627S06.17S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 11 to SCS S offered & adopted (Curls)--(4627S06.01S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 12 to SCS S offered & adopted (Schmitt)--(4627S06.28S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 13 to SCS S offered (Schaefer)--(4627S06.59S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 1 to SA 13 to SCS S offered & adopted (Chappelle-Nadal)--(4627S06.60S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 2 to SA 13 to SCS S offered & adopted (Schmitt)--(4627S06.62S),[u'other'],[],upper
+2014-02-26 00:00:00,"SA 13 to SCS, as amended, S adopted",[u'bill:passed'],[],upper
+2014-02-26 00:00:00,SA 14 to SCS S offered & adopted (Emery)--(4627S06.49S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 15 to SCS S offered (Chappelle-Nadal)--(4627S06.05S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 1 to SA 15 to SCS S offered & adopted (Pearce)--(4627S06.64S),[u'other'],[],upper
+2014-02-26 00:00:00,"SA 15 to SCS, as amended, S adopted",[u'bill:passed'],[],upper
+2014-02-26 00:00:00,SA 16 to SCS S offered & adopted (Chappelle-Nadal)--(4627S06.13S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 17 to SCS S offered & adopted (Chappelle-Nadal)--(4627S06.65S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 18 to SCS S offered & adopted (Pearce)--(4627S06.34S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 19 to SCS S offered (Chappelle-Nadal)--(4627S06.32S),[u'other'],[],upper
+2014-02-26 00:00:00,SA 1 to SA 19 to SCS S offered & adopted (Silvey)--(4627S06.67S),[u'other'],[],upper
+2014-02-26 00:00:00,"SA 19 to SCS, as amended, S adopted",[u'bill:passed'],[],upper
+2014-02-26 00:00:00,SA 20 to SCS S offered & adopted (Dempsey)--(4627S06.70S),[u'other'],[],upper
+2014-02-26 00:00:00,"SCS, as amended, adopted",[u'other'],[],upper
+2014-02-26 00:00:00,Perfected,[u'other'],[],upper
+2014-02-26 00:00:00,"Reported Truly Perfected S Rules, Joint Rules, Resolutions and Ethics Committee",[u'other'],[],upper
+2014-02-26 00:00:00,Referred S Governmental Accountability and Fiscal Oversight Committee,[u'committee:referred'],[],upper
+2014-02-27 00:00:00,Voted Do Pass S Governmental Accountability and Fiscal Oversight Committee,[u'other'],[],upper
+2014-02-27 00:00:00,Reported from S Governmental Accountability and Fiscal Oversight Committee to Floor,[u'other'],[],upper
+2014-02-27 00:00:00,S Third Read and Passed - EC adopted,"[u'bill:reading:3', u'bill:passed']",[],upper
+2014-02-27 00:00:00,H First Read,[u'bill:reading:1'],[],lower
+2014-03-03 00:00:00,H Second Read,[u'bill:reading:2'],[],lower
+2014-03-26 00:00:00,Referred H Elementary and Secondary Education Committee,[u'committee:referred'],[],lower
+2014-04-09 00:00:00,Hearing Conducted H Elementary and Secondary Education Committee,[u'other'],[],lower
+2014-04-23 00:00:00,HCS Voted Do Pass H Elementary and Secondary Education Committee,[u'other'],[],lower
+2014-04-23 00:00:00,HCS Reported Do Pass H Elementary and Secondary Education Committee,[u'other'],[],lower
+2014-04-23 00:00:00,Referred to H Rules Committee,[u'committee:referred'],[],lower
+2014-04-24 00:00:00,Voted Do Pass H Rules Committee,[u'other'],[],lower
+2014-04-24 00:00:00,Reported Do Pass H Rules Committee,[u'other'],[],lower
+2014-04-24 00:00:00,Referred H Fiscal Review Committee,[u'committee:referred'],[],lower
+2014-04-28 00:00:00,Voted Do Pass H Fiscal Review Committee,[u'other'],[],lower
+2014-04-28 00:00:00,Reported Do Pass H Fiscal Review Committee,[u'other'],[],lower
+2014-04-30 00:00:00,Taken up for Third Reading,[u'bill:reading:3'],[],upper
+2014-04-30 00:00:00,Placed back on Calendar,[u'other'],[],upper
+2014-04-30 00:00:00,HA 1 to HCS H offered (Wood)--(4627L09.70H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 1 to HA 1 to HCS H offered & adopted (Barnes)--(4627L09.96H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 2 to HA 1 to HCS H offered & adopted (LaFaver)--(4627L09.72H),[u'other'],[],lower
+2014-04-30 00:00:00,"HA 1 to HCS, as amended, H adopted",[u'other'],[],lower
+2014-04-30 00:00:00,HA 2 to HCS H offered (Stream)--(4627L09.87H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 1 to HA 2 to HCS H offered & adopted (LaFaver)--(4627L09.91H),[u'other'],[],lower
+2014-04-30 00:00:00,"HA 2 to HCS, as amended, H adopted",[u'other'],[],lower
+2014-04-30 00:00:00,HA 3 to HCS H offered (Anders)--(4627L09.02H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 1 to HA 3 to HCS H offered & adopted (Diehl)--(4627L09.88H),[u'other'],[],lower
+2014-04-30 00:00:00,"HA 3 to HCS, as amended, H adopted",[u'other'],[],lower
+2014-04-30 00:00:00,HA 4 to HCS H offered & adopted (Barnes)--(4627L09.65H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 5 to HCS H offered (Wood)--(4627L09.76H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 1 to HA 5 H offered & adopted (Cierpiot)--(4627L09.98H),[u'other'],[],lower
+2014-04-30 00:00:00,"HA 5 to HCS, as amended, H adopted",[u'other'],[],lower
+2014-04-30 00:00:00,HA 6 to HCS H offered & adopted (Neth)--(4627L09.26H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 7 to HCS H offered (Berry)--(4627L09.22H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 1 to HA 7 to HCS H offered & adopted (Lant)--(4627L09.69H),[u'other'],[],lower
+2014-04-30 00:00:00,"HA 7 to HCS, as amended, H adopted",[u'other'],[],lower
+2014-04-30 00:00:00,HA 8 to HCS H offered & adopted (Rowland)--(4627L09.53H),[u'other'],[],lower
+2014-04-30 00:00:00,HA 9 to HCS H offered & adopted (Curtis)--(4627L09.07L),[u'other'],[],lower
+2014-04-30 00:00:00,HA 10 to HCS H offered & adopted (Smith)--(4627L09.64H),[u'other'],[],lower
+2014-04-30 00:00:00,"HCS, as amended, H adopted",[u'other'],[],lower
+2014-04-30 00:00:00,H Third Read and Passed - EC adopted,"[u'bill:reading:3', u'bill:passed']",[],lower
+2014-05-01 00:00:00,"S refuses to concur in HCS, as amended",[u'other'],[],upper
+2014-05-01 00:00:00,S requests H recede or grant conference,[u'other'],[],upper
+2014-05-06 00:00:00,H refuses to recede and grants conference,[u'other'],[],lower
+2014-05-06 00:00:00,"S conferees appointed: Pearce, Schmitt, Emery, Chappelle-Nadal, Curls",[u'other'],[],upper
+2014-05-07 00:00:00,"H conferees appointed: Stream, Cookson, Englund",[u'other'],[],lower
+2014-05-14 00:00:00,CCR S offered & adopted (4627S13.1SR),[u'other'],[],upper
+2014-05-14 00:00:00,CCS S Third Read and Passed - EC adopted,"[u'bill:reading:3', u'bill:passed']",[],upper
+2014-05-14 00:00:00,H submits CCR (4627S13.01F),[u'other'],[],lower
+2014-05-15 00:00:00,CCR H adopted,[u'other'],[],lower
+2014-05-15 00:00:00,CCS H Third Read and Passed - EC adopted,"[u'bill:reading:3', u'bill:passed']",[],lower
+2014-05-15 00:00:00,Truly Agreed To and Finally Passed,[u'bill:passed'],[],upper
+2014-05-30 00:00:00,Reported Duly Enrolled S Rules Committee,[u'other'],[],upper
+2014-05-30 00:00:00,Signed by Senate President Pro Tem,[u'other'],[],upper
+2014-05-30 00:00:00,Signed by House Speaker,[u'other'],[],lower
+2014-05-30 00:00:00,Delivered to Governor,[u'other'],[],Governor
+2014-06-24 00:00:00,Vetoed by Governor,[u'other'],[],Governor
+2014-09-10 00:00:00,S adopted motion to override Governor's veto,[u'bill:passed'],[],upper
