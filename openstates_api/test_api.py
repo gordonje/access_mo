@@ -1,5 +1,5 @@
 
-from config import key
+from config import key # save a file named config.py that contains key = [whatever your key OS sends you]
 import requests
 import csv
 
