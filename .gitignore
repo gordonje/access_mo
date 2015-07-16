@@ -59,3 +59,4 @@ target/
 # Added by JG
 .DS_Store
 config.py
+past_content/*
