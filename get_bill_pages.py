@@ -45,5 +45,6 @@ for bill_page in Source_Page.select(
 				try:
 					get_content(new_page, r_sesh)
 				except:
+					print '      Lost connection, resetting session...'
 					r_sesh = session()
 					get_content(new_page, r_sesh)
