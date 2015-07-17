@@ -50,6 +50,25 @@ class Source_Page(BaseModel):
 			(('url', 'parent_id'), True),
 		)
 
+class Lawmaker(BaseModel):
+	first = CharField()
+	middle = CharField(null = True)
+	last = CharField()
+	chamber = CharField()
+	year = IntegerField()
+	party = CharField()
+	district = CharField()
+	phone = CharField(null = True)
+	room = CharField(null = True)
+	fax = CharField(null = True)
+	email = CharField(null = True)
+	source_page = ForeignKeyField(Source_Page)
+
+	class Meta:
+		indexes = (
+			(('year', 'district'), True),
+		)
+
 	# def full_url():
 	# # concatenates url parts, returns a full url
 	# 	full_url = '{0}://{1}{2}'.format(self.scheme, self.netloc, self.path)

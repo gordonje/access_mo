@@ -6,4 +6,5 @@ from urlparse import urlparse
 
 db.create_tables([
 				  Source_Page
+				, Lawmaker
 			], True)

@@ -1,8 +1,6 @@
 import os
 from utils import *
 
-# get house bill links
-
 parent = Source_Page.alias()
 
 for bill_page in Source_Page.select(
@@ -15,7 +13,7 @@ for bill_page in Source_Page.select(
 						    	Source_Page.chamber, Source_Page.year.desc()
 						    ):
 
-	print '   Getting bill links for {0} {1}...'.format(bill_page.year, bill_page.parent.name)
+	print '   Getting bill links for {0} {1} {2}...'.format(bill_page.chamber, bill_page.year, bill_page.parent.name)
 
 	directory = 'past_content/{0}/{1}_{2}/'.format(bill_page.chamber, bill_page.year, bill_page.parent.name.replace(' ', '_')) 
 
