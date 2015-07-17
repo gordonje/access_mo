@@ -60,3 +60,4 @@ target/
 .DS_Store
 config.py
 past_content/*
+csvs/*
