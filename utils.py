@@ -12,7 +12,7 @@ def get_content(source_page_obj, request_session = None):
 		with open(source_page_obj.file_name, 'r') as f:
 			content = f.read()
 	except:
-		sleep(2)		
+		sleep(3)		
 		response = request_session.get(source_page_obj.url)
 		content = response.content
 
