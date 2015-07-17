@@ -129,8 +129,8 @@ for member_page in Source_Page.select(
 		try:
 			with db.atomic():
 				Lawmaker.create(**member)
-		except Exception, e:
-			print e
+		except IntegrityError:
+			pass
 
 		try:
 			get_content(sp_obj, r_sesh)
@@ -140,62 +140,3 @@ for member_page in Source_Page.select(
 
 print 'fin.'
 
-
-
-	# except:
-	# 	try:
-			
-	# 	except:
-	# 		rows = soup.find_all('a')
-	
-	# for row in rows[1:]:
-
-	# 	try:
-	# 		row.find('a')['href']
-	# 	except:
-	# 		pass
-	# 	else:
-	# 		cols = row.find_all('td')
-
-	# 		if len(cols) >= 2:
-
-	# 			for col in cols:
-	# 				print col.text.strip()
-
-
-# first = CharField()
-# middle = CharField(null = True)
-# last = CharField()
-# chamber = CharField()
-# year = IntegerField()
-# party = CharField()
-# district = CharField()
-# phone = CharField(null = True)
-# room = CharField(null = True)
-# email = CharField(null = True)
-# url = CharField()
-
-
-	# for link in extract_links(content, member_page.url):
-
-	# 	name = re.sub('\s{2,}', ' ', link['name']).strip()
-
-	# 	print name
-
-		# link['name'] = name
-		# link['year'] = member_page.year
-		# link['parent_id'] = member_page.id
-		# link['file_name'] = '{0}{1}.html'.format(directory, link['name'].replace(' ', '_'))
-
-		# try:
-		# 	with db.atomic():
-		# 		new_page = Source_Page.create(**link)
-		# except:
-		# 	pass
-		# else:
-		# 	try:
-		# 		get_content(new_page, r_sesh)
-		# 	except:
-		# 		print '      Lost connection, resetting session...'
-		# 		r_sesh = session()
-		# 		get_content(new_page, r_sesh)
