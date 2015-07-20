@@ -13,6 +13,12 @@ db.create_tables([
 				, Session
 				, Bill_Type
 				, Bill
+				, Bill_Cosponsor
+				, Bill_Amendment
+				, Bill_Action
+				, Bill_Topic
+				, Committee
+				, Legislator_Committee
 			], True)
 
 
