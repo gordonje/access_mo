@@ -61,3 +61,4 @@ target/
 config.py
 past_content/*
 csvs/*
+test.py
