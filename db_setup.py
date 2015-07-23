@@ -3,6 +3,7 @@
 
 from models import *
 from urlparse import urlparse
+import csv
 
 db.create_tables([
 				  Source_Page
@@ -27,34 +28,43 @@ with open('look_ups/session_types.csv', 'rU', ) as f:
 	reader = csv.DictReader(f)
 
 	for row in reader:
+		
 		try:
-			Session_Type.create(**row)
-		except IntegrityError:
-			print '{} is already inserted.'.format(row['name'])
+			with db.atomic():
+				Session_Type.create(**row)
+		except Exception, e:
+			print e
 
 with open('look_ups/assemblies.csv', 'rU', ) as f:
 	reader = csv.DictReader(f)
 
 	for row in reader:
+		
 		try:
-			Assembly.create(**row)
-		except IntegrityError:
-			print '{} is already inserted.'.format(row['name'])
+			with db.atomic():
+				Assembly.create(**row)
+		except Exception, e:
+			print e
 
 with open('look_ups/chambers.csv', 'rU', ) as f:
 	reader = csv.DictReader(f)
 
 	for row in reader:
+		
 		try:
-			Chamber.create(**row)
-		except IntegrityError:
-			print '{} is already inserted.'.format(row['name'])
+			with db.atomic():
+				Chamber.create(**row)
+		except Exception, e:
+			print e
 
 with open('look_ups/bill_types.csv', 'rU', ) as f:
 	reader = csv.DictReader(f)
 
 	for row in reader:
+		# row['chamber'] = Chamber.get(id = row['chamber'])
 		try:
-			Bill_Type.create(**row)
-		except IntegrityError:
-			print '{} is already inserted.'.format(row['name'])
+			with db.atomic():
+				Bill_Type.create(**row)
+		except Exception, e:
+			print e
+

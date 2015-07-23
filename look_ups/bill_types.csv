@@ -1,11 +1,11 @@
-name,description,chamber_id
-HCR ,House Concurrent Resolution,H
-HJR ,House Joint Resolution,H
-SCR ,Senate Concurrent Resolution,S
-SR ,Senate Resolution,S
-SRB ,Senate ??? Bill?,S
-SB ,Senate Bill,S
-HB ,House Bill,H
-SRM ,Senate ??? ??,S
-HR ,House Resolution,H
-SJR ,Senate Joint Resolution,S
+id,name,chamber
+HCR,House Concurrent Resolution,H
+HJR,House Joint Resolution,H
+SCR,Senate Concurrent Resolution,S
+SR,Senate Resolution,S
+SRB,Senate ??? Bill?,S
+SB,Senate Bill,S
+HB,House Bill,H
+SRM,Senate ??? ??,S
+HR,House Resolution,H
+SJR,Senate Joint Resolution,S

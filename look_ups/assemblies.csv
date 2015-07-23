@@ -1,12 +1,12 @@
-number,name
-88,88th General Assembly
-89,89th General Assembly
-90,90th General Assembly
-91,91st General Assembly
-92,92nd General Assembly
-93,93rd General Assembly
-94,94th General Assembly
-95,95th General Assembly
-96,96th General Assembly
-97,97th General Assembly
-98,98th General Assembly
+id,name,start_year,end_year
+88,88th General Assembly,1995,1996
+89,89th General Assembly,1997,1998
+90,90th General Assembly,1999,2000
+91,91st General Assembly,2001,2002
+92,92nd General Assembly,2003,2004
+93,93rd General Assembly,2005,2006
+94,94th General Assembly,2007,2008
+95,95th General Assembly,2009,2010
+96,96th General Assembly,2011,2012
+97,97th General Assembly,2013,2014
+98,98th General Assembly,2015,2016

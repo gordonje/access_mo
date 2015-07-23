@@ -53,9 +53,11 @@ class Source_Page(BaseModel):
 
 
 class Assembly(BaseModel):
-	number = IntegerField(primary_key = True)
-	name = CharField()
+	id = IntegerField(primary_key = True)
+	name = CharField()	
 	created_date = DateTimeField(default = datetime.now)
+	start_year = IntegerField()
+	end_year = IntegerField()
 
 
 class Chamber(BaseModel):
@@ -76,13 +78,13 @@ class Committee(BaseModel):
 
 class Person(BaseModel):
 	first_name = CharField()
-	middle_name = CharField()
+	middle_name = CharField(null = True)
 	last_name = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
 	class Meta:
 		indexes = (
-			(('first', 'middle', 'last'), True),
+			(('first_name', 'last_name'), True),
 		)
 
 
@@ -96,7 +98,9 @@ class Legislator_Assembly(BaseModel):
 	created_date = DateTimeField(default = datetime.now)
 
 	class Meta:
-		primary_key = CompositeKey('person', 'assembly')
+		indexes = (
+			(('person', 'assembly'), True),
+		)
 
 
 class Session_Type(BaseModel):
@@ -115,7 +119,7 @@ class Session(BaseModel):
 
 class Bill_Type(BaseModel):
 	id = CharField(primary_key = True)
-	description = CharField()
+	name = CharField()
 	chamber = ForeignKeyField(Chamber, related_name = 'bill_types')
 	created_date = DateTimeField(default = datetime.now)
 
