@@ -18,8 +18,6 @@ for member_page in Source_Page.select(
 
 	directory = 'past_content/{0}/{1}_{2}/'.format(member_page.chamber, member_page.year, member_page.parent.name.replace(' ', '_')) 
 
-
-
 	try:
 		content = get_content(member_page, r_sesh)
 	except: # needs to be more specific

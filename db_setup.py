@@ -8,6 +8,7 @@ db.create_tables([
 				  Source_Page
 				, Assembly
 				, Chamber
+				, Person
 				, Legislator_Assembly
 				, Session_Type
 				, Session

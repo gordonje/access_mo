@@ -47,17 +47,27 @@ def extract_links(content, base_url):
 
 	for link in found_links:
 		if link['href'] != '/':
+
+			parent_path = ''.join(re.findall('.+\/', urlparse(base_url).path))
+
+			link_path = urlparse(link['href']).path.replace('./', '/') 
+
+			if parent_path not in link_path:
+				full_path = parent_path + link_path
+			else:
+				full_path = link_path
+
 			out_links.append({
 							  'scheme': urlparse(base_url).scheme
 							, 'netloc': urlparse(base_url).netloc
-							, 'path': urlparse(link['href']).path.replace('./', '/')
+							, 'path': link_path
 							, 'params': urlparse(link['href']).params
 							, 'query': urlparse(link['href']).query
 							, 'fragment': urlparse(link['href']).fragment
 							, 'url': urlunparse((
 									  urlparse(base_url).scheme
 									, urlparse(base_url).netloc
-									, urlparse(link['href']).path.replace('./', '/')
+									, full_path
 									, urlparse(link['href']).params
 									, urlparse(link['href']).query
 									, urlparse(link['href']).fragment
@@ -65,4 +75,5 @@ def extract_links(content, base_url):
 							, 'name': link.text
 							, 'chamber': chamber
 						})
+
 	return out_links

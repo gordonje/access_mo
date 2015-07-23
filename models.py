@@ -67,34 +67,11 @@ class Chamber(BaseModel):
 	created_date = DateTimeField(default = datetime.now)
 
 
-class Legislator_Assembly(BaseModel):
-	person = ForeignKeyField(Person, related_name = 'terms')
-	assembly = ForeignKeyField(Assembly, related_name = 'members')
-	chamber = ForeignKeyField()
-	party = CharField()
-	district = CharField()
-	counties = CharField()
+class Committee(BaseModel):
+	# Is it the same committees with the same names for all sessions?
+	name = CharField()
+	chamber = ForeignKeyField(Chamber, related_name = 'committees')
 	created_date = DateTimeField(default = datetime.now)
-
-	class Meta:
-        primary_key = CompositeKey('person', 'assembly')
-
-
-class Session_Type(BaseModel):
-	id = CharField(primary_key = True)
-	name = CharField(unique = True)
-	created_date = DateTimeField(default = datetime.now)
-
-
-class Session(BaseModel):
-	assembly = ForeignKeyField(Assembly, related_name = 'sessions')
-	year = IntegerField()
-	session_type = ForeignKeyField(Session_Type)
-	name = get_name()
-	created_date = DateTimeField(default = datetime.now)
-
-	def get_name(self):
-		return '{0} {1}'.format(self.year, self.session_type.name)
 
 
 class Person(BaseModel):
@@ -107,6 +84,33 @@ class Person(BaseModel):
 		indexes = (
 			(('first', 'middle', 'last'), True),
 		)
+
+
+class Legislator_Assembly(BaseModel):
+	person = ForeignKeyField(Person, related_name = 'terms')
+	assembly = ForeignKeyField(Assembly, related_name = 'members')
+	chamber = ForeignKeyField(Chamber)
+	party = CharField()
+	district = CharField()
+	counties = CharField()
+	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		primary_key = CompositeKey('person', 'assembly')
+
+
+class Session_Type(BaseModel):
+	id = CharField(primary_key = True)
+	name = CharField(unique = True)
+	created_date = DateTimeField(default = datetime.now)
+
+
+class Session(BaseModel):
+	assembly = ForeignKeyField(Assembly, related_name = 'sessions')
+	year = IntegerField()
+	session_type = ForeignKeyField(Session_Type)
+	name = CharField()
+	created_date = DateTimeField(default = datetime.now)
 
 
 class Bill_Type(BaseModel):
@@ -124,7 +128,7 @@ class Bill(BaseModel):
 	description = CharField()
 	lr_number = CharField(null = True)
 	sponsor = ForeignKeyField(Legislator_Assembly, related_name = 'sponsored_bills')
-	committee = ForeignKeyField(Committee, null = True	)
+	committee = ForeignKeyField(Committee, null = True)
 	effective_date = DateField(null = True)
 	created_date = DateTimeField(default = datetime.now)
 	# BillCombinedWith
@@ -141,10 +145,10 @@ class Bill(BaseModel):
 		)
 
 
-
 class Bill_Cosponsor(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'cosponsors')
 	created_date = DateTimeField(default = datetime.now)
+
 
 class Bill_Action(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'actions')
@@ -154,6 +158,7 @@ class Bill_Action(BaseModel):
 	journal_page2 = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
+
 class Bill_Amendment(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'amendments')
 	lr_number = CharField()
@@ -161,16 +166,12 @@ class Bill_Amendment(BaseModel):
 	StatusDate = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
+
 class Bill_Topic(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'topics')
 	topic = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
-class Committee(BaseModel):
-	# Is it the same committees with the same names for all sessions?
-	name = CharField()
-	chamber = ForeignKeyField(Chamber, related_name = 'committees')
-	created_date = DateTimeField(default = datetime.now)
 
 class Legislator_Committee(BaseModel):
 	# Are the appointments for each session or each assembly?

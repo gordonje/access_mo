@@ -8,13 +8,12 @@ for bill_page in Source_Page.select(
 							).join(
 								parent, on=(Source_Page.parent_id == parent.id).alias('parent')
 							).where(
-								Source_Page.url.contains('billist')| Source_Page.url.contains('billlist')
+								fn.lower(Source_Page.url) % '%bil%list%'
 						    ).order_by(
-						    	Source_Page.chamber, Source_Page.year.desc()
+						    	Source_Page.chamber.desc(), Source_Page.year.desc()
 						    ):
 
 	print '   Getting bill links for {0} {1} {2}...'.format(bill_page.chamber, bill_page.year, bill_page.parent.name)
-
 	directory = 'past_content/{0}/{1}_{2}/'.format(bill_page.chamber, bill_page.year, bill_page.parent.name.replace(' ', '_')) 
 
 	try:
@@ -34,15 +33,15 @@ for bill_page in Source_Page.select(
 			link['parent_id'] = bill_page.id
 			link['file_name'] = '{0}{1}.html'.format(directory, link['name'].replace(' ', '_'))
 
+		try:
+			with db.atomic():
+				new_page = Source_Page.create(**link)
+		except:
+			pass
+		else:
 			try:
-				with db.atomic():
-					new_page = Source_Page.create(**link)
+				get_content(new_page, r_sesh)
 			except:
-				pass
-			else:
-				try:
-					get_content(new_page, r_sesh)
-				except:
-					print '      Lost connection, resetting session...'
-					r_sesh = session()
-					get_content(new_page, r_sesh)
+				print '      Lost connection, resetting session...'
+				r_sesh = session()
+				get_content(new_page, r_sesh)
