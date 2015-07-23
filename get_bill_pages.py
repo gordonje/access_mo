@@ -14,7 +14,10 @@ for bill_page in Source_Page.select(
 						    ):
 
 	print '   Getting bill links for {0} {1} {2}...'.format(bill_page.chamber, bill_page.year, bill_page.parent.name)
-	directory = 'past_content/{0}/{1}_{2}/'.format(bill_page.chamber, bill_page.year, bill_page.parent.name.replace(' ', '_')) 
+	directory = 'past_content/{0}/{1}_{2}/bills'.format(bill_page.chamber, bill_page.year, bill_page.parent.name.replace(' ', '_')) 
+
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 
 	try:
 		content = get_content(bill_page, r_sesh)
