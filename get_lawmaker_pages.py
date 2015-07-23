@@ -10,13 +10,17 @@ for member_page in Source_Page.select(
 							).where(
 								(Source_Page.name.contains('Roster')|Source_Page.name.contains('Senators'))
 								& ~(parent.name.contains('Extraordinary'))
-						    ).order_by(
-						    	Source_Page.chamber, Source_Page.year.desc()
-						    ):
+							).order_by(
+								Source_Page.chamber, Source_Page.year.desc()
+							):
+
 
 	print '   Getting members for {0} {1} {2}...'.format(member_page.chamber, member_page.year, member_page.parent.name)
 
-	directory = 'past_content/{0}/{1}_{2}/'.format(member_page.chamber, member_page.year, member_page.parent.name.replace(' ', '_')) 
+	directory = 'past_content/{0}/{1}_{2}/members'.format(member_page.chamber, member_page.year, member_page.parent.name.replace(' ', '_')) 
+	
+	if not os.path.exists(directory):
+		os.makedirs(directory)
 
 	try:
 		content = get_content(member_page, r_sesh)
@@ -41,6 +45,13 @@ for member_page in Source_Page.select(
 
 				member_url = tds[0].find('a')['href']
 
+				parent_path = urlparse(member_page.url).path
+
+				if parent_path not in member_url:
+					full_path_url = parent_path + member_url
+				else:
+					full_path_url = member_url
+
 				members.append({
 					  'last': tds[0].text.strip()
 					, 'first': tds[1].text.strip()
@@ -48,7 +59,7 @@ for member_page in Source_Page.select(
 					, 'party': tds[3].text.strip()
 					, 'year': member_page.year
 					, 'chamber': member_page.chamber
-					, 'member_url': tds[0].find('a')['href']
+					, 'url': full_path_url
 				})
 
 		if member_page.year <= 2010:
@@ -76,8 +87,14 @@ for member_page in Source_Page.select(
 					except:
 						middle = None
 
-					# for td in tds[2:]:
-					# 	print td.text.strip()
+					member_url = tds[0].find('a')['href']
+
+					parent_url = urlparse(member_page.url).netloc
+
+					if parent_path not in member_url:
+						full_path_url = parent_path + member_url
+					else:
+						full_path_url = member_url
 
 					members.append({
 						  'last': last
@@ -87,32 +104,38 @@ for member_page in Source_Page.select(
 						, 'party': tds[1].text.split('-')[1].strip()
 						, 'year': member_page.year
 						, 'chamber': member_page.chamber
-						, 'member_url': tds[0].find('a')['href']
+						, 'url': full_path_url
 					})
 
 	# if member_page.chamber == 'S': ....
 
 	for member in members:
 
+		print member_page.url
+		print member['url'] 
+
+		print '---------------------------------------'
+
+
 		source_page = {
 			  'year': member['year']
 			, 'chamber': member['chamber']
 			, 'scheme': urlparse(member_page.url).scheme
 			, 'netloc': urlparse(member_page.url).netloc
-			, 'path': urlparse(member['member_url']).path.replace('./', '/')
-			, 'params': urlparse(member['member_url']).params
-			, 'query': urlparse(member['member_url']).query
-			, 'fragment': urlparse(member['member_url']).fragment
+			, 'path': urlparse(member['url']).path.replace('./', '/')
+			, 'params': urlparse(member['url']).params
+			, 'query': urlparse(member['url']).query
+			, 'fragment': urlparse(member['url']).fragment
 			, 'url': urlunparse((
 					  urlparse(member_page.url).scheme
 					, urlparse(member_page.url).netloc
-					, urlparse(member['member_url']).path.replace('./', '/')
-					, urlparse(member['member_url']).params
-					, urlparse(member['member_url']).query
-					, urlparse(member['member_url']).fragment
+					, urlparse(member['url']).path.replace('./', '/')
+					, urlparse(member['url']).params
+					, urlparse(member['url']).query
+					, urlparse(member['url']).fragment
 				))
 			, 'name': '{0} {1}'.format(member['first'], member['last'])
-			, 'file_name': '{0}{1}.html'.format(directory, member['district'])
+			, 'file_name': '{0}/{1}.html'.format(directory, member['district'])
 			, 'parent_id': member_page.parent_id
 		}
 
@@ -124,11 +147,21 @@ for member_page in Source_Page.select(
 
 		member['source_page'] = sp_obj.id
 
-		try:
-			with db.atomic():
-				Lawmaker.create(**member)
-		except IntegrityError:
-			pass
+		member['person'] = Person.get_or_create(
+				  first_name = member['first']
+				, last_name = member['last']
+			)[0]
+
+		if member['year'] % 2 == 0:
+			member['assembly'] = Assembly.get(Assembly.end_year == member['year'])
+		else:
+			member['assembly'] = Assembly.get(Assembly.start_year == member['year'])
+
+			try:
+				with db.atomic():
+					Legislator_Assembly.create(**member)
+			except IntegrityError:
+				pass
 
 		try:
 			get_content(sp_obj, r_sesh)

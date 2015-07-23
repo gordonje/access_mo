@@ -94,7 +94,7 @@ class Legislator_Assembly(BaseModel):
 	chamber = ForeignKeyField(Chamber)
 	party = CharField()
 	district = CharField()
-	counties = CharField()
+	counties = CharField(null = True)
 	created_date = DateTimeField(default = datetime.now)
 
 	class Meta:
