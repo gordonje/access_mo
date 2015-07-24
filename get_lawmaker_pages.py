@@ -11,7 +11,7 @@ for member_page in Source_Page.select(
 								(Source_Page.name.contains('Roster')|Source_Page.name.contains('Senators'))
 								& ~(parent.name.contains('Extraordinary'))
 							).order_by(
-								Source_Page.chamber, Source_Page.year.desc()
+								Source_Page.chamber.desc(), Source_Page.year.desc()
 							):
 
 
@@ -28,29 +28,20 @@ for member_page in Source_Page.select(
 		r_sesh = session()
 		content = get_content(member_page, r_sesh)
 
-	if member_page.year > 2001:
-		soup = BeautifulSoup(content, 'lxml')
-	elif member_page.year <= 2001:
-		soup = BeautifulSoup(content, 'html5lib')
-
 	members = []
 
 	if member_page.chamber == 'H':
+
+		if member_page.year > 2001:
+			soup = BeautifulSoup(content, 'lxml')
+		elif member_page.year <= 2001:
+			soup = BeautifulSoup(content, 'html5lib')
 
 		if member_page.year > 2010:
 
 			for tr in soup.find(id = 'ContentPlaceHolder1_gridMembers_DXMainTable').find_all('tr')[1:]:
 
 				tds = tr.find_all('td')
-
-				member_url = tds[0].find('a')['href']
-
-				parent_path = urlparse(member_page.url).path
-
-				if parent_path not in member_url:
-					full_path_url = parent_path + member_url
-				else:
-					full_path_url = member_url
 
 				members.append({
 					  'last': tds[0].text.strip()
@@ -59,7 +50,6 @@ for member_page in Source_Page.select(
 					, 'party': tds[3].text.strip()
 					, 'year': member_page.year
 					, 'chamber': member_page.chamber
-					, 'url': full_path_url
 				})
 
 		if member_page.year <= 2010:
@@ -87,15 +77,6 @@ for member_page in Source_Page.select(
 					except:
 						middle = None
 
-					member_url = tds[0].find('a')['href']
-
-					parent_url = urlparse(member_page.url).netloc
-
-					if parent_path not in member_url:
-						full_path_url = parent_path + member_url
-					else:
-						full_path_url = member_url
-
 					members.append({
 						  'last': last
 						, 'first': first
@@ -104,32 +85,156 @@ for member_page in Source_Page.select(
 						, 'party': tds[1].text.split('-')[1].strip()
 						, 'year': member_page.year
 						, 'chamber': member_page.chamber
-						, 'url': full_path_url
+						, 'url': tds[0].find('a')['href']
 					})
 
-	# if member_page.chamber == 'S': ....
+	if member_page.chamber == 'S':
+
+		soup = BeautifulSoup(content, 'lxml')
+
+		if member_page.year > 2004:
+
+			for tr in soup.find('table', attrs = {'border': 0, 'width': re.compile('[6,9]0%')}).find_all('tr'):
+				tds = tr.find_all('td')
+
+				try:
+					tds[0].find('a')['href']
+				except:
+					pass
+				else:
+
+					name = tds[0].text.strip().split()
+
+					if 'Vacant' not in name:
+
+						last = name.pop(-1)
+						first = name.pop(0)
+
+						try:
+							middle = name.pop()
+						except:
+							middle = None
+
+						p_d = tds[1].text.strip().split('-')
+
+						party = p_d[0]
+						district = p_d[1]
+
+					else:
+						first = 'Vacant'
+						middle = 'Vacant'
+						last = 'Vacant'
+						party = None
+						district = tds[1].text.strip()
+
+						if len(district) == 0:
+							district = name.pop(-1)
+
+					members.append({
+						  'last': last
+						, 'first': first
+						, 'middle': middle
+						, 'district': district
+						, 'party': party
+						, 'year': member_page.year
+						, 'chamber': member_page.chamber
+						, 'url': tds[0].find('a')['href']
+					})
+
+		elif 2000 < member_page.year & member_page.year <= 2004  :
+
+			for link in soup.find_all('a'):
+
+				if link.find_parent('td'):
+
+					name = link.text.strip().split()
+
+					p_d = link.find_parent('td').find_next_sibling('td').text.strip().split('-')
+
+					if 'Vacant' not in name:
+
+						last = name.pop(-1)
+						first = name.pop(0)
+
+						try:
+							middle = name.pop()
+						except:
+							middle = None
+
+						party = p_d[0]
+						district = p_d[1]
+
+					else:
+						first = 'Vacant'
+						middle = 'Vacant'
+						last = 'Vacant'
+						party = None
+						district = p_d[0]
+
+					members.append({
+						  'last': last
+						, 'first': first
+						, 'middle': middle
+						, 'district': district
+						, 'party': party
+						, 'year': member_page.year
+						, 'chamber': member_page.chamber
+						, 'url': link['href']
+					})
+
+		else:
+
+			for link in soup.find_all('a'):
+
+				if '/index' not in link['href']:
+
+					name = [ i for i in link.text.strip().split() if not i.startswith('Senator')]
+
+					if 'Vacant' not in name:
+
+						last = name.pop(-1)
+						first = name.pop(0)
+
+						try:
+							middle = name.pop()
+						except:
+							middle = None
+
+					else:
+						first = 'Vacant'
+						middle = 'Vacant'
+						last = 'Vacant'
+					
+					members.append({
+						  'last': last
+						, 'first': first
+						, 'middle': middle
+						, 'district': re.search('mem(\d+).htm', link['href']).group(1)
+						, 'party': tds[1].text.split('-')[1].strip()
+						, 'year': member_page.year
+						, 'chamber': member_page.chamber
+						, 'url': link['href']
+					})
 
 	for member in members:
 
-		print member_page.url
-		print member['url'] 
-
-		print '---------------------------------------'
-
+		if member['chamber'] == 'H':
+			if member['year'] >= 2009:
+				member['url'] = 'http://house.mo.gov/member.aspx?year={0}&district={1}'.format(member['year'], member['district'])
 
 		source_page = {
 			  'year': member['year']
 			, 'chamber': member['chamber']
 			, 'scheme': urlparse(member_page.url).scheme
 			, 'netloc': urlparse(member_page.url).netloc
-			, 'path': urlparse(member['url']).path.replace('./', '/')
+			, 'path': urlparse(member['url']).path
 			, 'params': urlparse(member['url']).params
 			, 'query': urlparse(member['url']).query
 			, 'fragment': urlparse(member['url']).fragment
 			, 'url': urlunparse((
 					  urlparse(member_page.url).scheme
 					, urlparse(member_page.url).netloc
-					, urlparse(member['url']).path.replace('./', '/')
+					, urlparse(member['url']).path
 					, urlparse(member['url']).params
 					, urlparse(member['url']).query
 					, urlparse(member['url']).fragment
@@ -165,9 +270,10 @@ for member_page in Source_Page.select(
 
 		try:
 			get_content(sp_obj, r_sesh)
-		except:
-			print '      Lost connection, resetting session...'
+		except Exception, e:
+			print e
 			r_sesh = session()
+			get_content(sp_obj, r_sesh)
 
 print 'fin.'
 
