@@ -204,16 +204,23 @@ for member_page in Source_Page.select(
 						first = 'Vacant'
 						middle = 'Vacant'
 						last = 'Vacant'
+
+					parent_url_path = re.search('^.+\.gov\/.+\/', member_page.url).group()
+
+					if member_page.url not in link['href']:
+						member_url = parent_url_path + link['href']
+					else:
+						member_url = link['href']
 					
 					members.append({
 						  'last': last
 						, 'first': first
 						, 'middle': middle
 						, 'district': re.search('mem(\d+).htm', link['href']).group(1)
-						, 'party': tds[1].text.split('-')[1].strip()
+						, 'party': None
 						, 'year': member_page.year
 						, 'chamber': member_page.chamber
-						, 'url': link['href']
+						, 'url': member_url
 					})
 
 	for member in members:
