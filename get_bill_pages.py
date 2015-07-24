@@ -1,4 +1,5 @@
 import os
+import requests
 from utils import *
 
 parent = Source_Page.alias()
@@ -20,32 +21,49 @@ for bill_page in Source_Page.select(
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
-	try:
-		content = get_content(bill_page, r_sesh)
-	except: # needs to be more specific
-		r_sesh = session()
-		content = get_content(bill_page, r_sesh)
+	with requests.session() as r_sesh:
 
-	for link in extract_links(content, bill_page.url):
+		content = None
 
-		name = re.sub('\s{2,}', ' ', link['name']).strip()
-
-		if re.match('\D+_\d+', name):
-
-			link['name'] = name
-			link['year'] = bill_page.year
-			link['parent_id'] = bill_page.id
-			link['file_name'] = '{0}{1}.html'.format(directory, link['name'].replace(' ', '_'))
-
+		while content == None:
 			try:
-				with db.atomic():
-					new_page = Source_Page.create(**link)
-			except:
-				pass
-			else:
+				content = get_content(bill_page, r_sesh)
+			except requests.exceptions.ConnectionError, e:
+				print e
+				print '   Connection failed. Retrying...'
+				r_sesh = requests.session()
+			except Exception, e:
+				print 'Whaa happen?'
+				print e
+
+		for link in extract_links(content, bill_page.url):
+
+			name = re.sub('\s{2,}', ' ', link['name']).strip()
+
+			if re.match('\D+_\d+', name):
+
+				link['name'] = name
+				link['year'] = bill_page.year
+				link['parent_id'] = bill_page.id
+				link['file_name'] = '{0}{1}.html'.format(directory, link['name'].replace(' ', '_'))
+
 				try:
-					get_content(new_page, r_sesh)
+					with db.atomic():
+						new_page = Source_Page.create(**link)
 				except:
-					print '      Lost connection, resetting session...'
-					r_sesh = session()
-					get_content(new_page, r_sesh)
+					pass
+				else:
+					content = None
+
+					while content == None:
+						try:
+							content = get_content(new_page, r_sesh)
+						except requests.exceptions.ConnectionError, e:
+							print e
+							print '   Connection failed. Retrying...'
+							r_sesh = requests.session()
+						except Exception, e:
+							print 'Whaa happen?'
+							print e
+
+print 'fin.'

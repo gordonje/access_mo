@@ -1,4 +1,5 @@
 import os
+import requests
 from utils import *
 
 if not os.path.exists('past_content/'):
@@ -10,7 +11,7 @@ if not os.path.exists('past_content/H/'):
 if not os.path.exists('past_content/S/'):
 	os.makedirs('past_content/S/')
 
-with session() as r_sesh:
+with requests.session() as r_sesh:
 
 	for chamber in Chamber.select():
 
@@ -69,11 +70,18 @@ with session() as r_sesh:
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 
-		try:
-			content = get_content(sess_page, r_sesh)
-		except: # needs to be more specific
-			r_sesh = session()
-			content = get_content(sess_page, r_sesh)
+		content = None
+		
+		while content == None:
+			try:
+				content = get_content(sess_page, r_sesh)
+			except requests.exceptions.ConnectionError, e:
+				print e
+				print '   Connection failed. Retrying...'
+				r_sesh = requests.session()
+			except Exception, e:
+				print 'Whaa happen?'
+				print e
 
 		for link in extract_links(content, sess_page.url):
 

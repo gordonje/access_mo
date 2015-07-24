@@ -1,18 +1,18 @@
-from requests import session
+
 from bs4 import BeautifulSoup
 import re
 from urlparse import urlparse, urlunparse
 from time import sleep
 from models import *
 
-def get_content(source_page_obj, request_session = None):
+def get_content(source_page_obj, request_session):
 	"""Returns content of source_page_obj. If the content wasn't previously downloaded, it requests the content and downloads it."""
 
 	try:
 		with open(source_page_obj.file_name, 'r') as f:
 			content = f.read()
 	except:
-		sleep(4)		
+		sleep(4)
 		response = request_session.get(source_page_obj.url)
 		content = response.content
 
