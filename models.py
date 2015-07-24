@@ -95,6 +95,7 @@ class Legislator_Assembly(BaseModel):
 	party = CharField()
 	district = CharField()
 	counties = CharField(null = True)
+	source_page = ForeignKeyField(Source_Page)
 	created_date = DateTimeField(default = datetime.now)
 
 	class Meta:
@@ -129,11 +130,12 @@ class Bill(BaseModel):
 	bill_type = ForeignKeyField(Bill_Type)
 	number = IntegerField()
 	title = CharField(null = True)
-	description = CharField()
+	description = CharField(null = True)
 	lr_number = CharField(null = True)
-	sponsor = ForeignKeyField(Legislator_Assembly, related_name = 'sponsored_bills')
+	sponsor = ForeignKeyField(Legislator_Assembly, null = True, related_name = 'sponsored_bills')
 	committee = ForeignKeyField(Committee, null = True)
 	effective_date = DateField(null = True)
+	source_page = ForeignKeyField(Source_Page)
 	created_date = DateTimeField(default = datetime.now)
 	# BillCombinedWith
 	# last_action_date,
