@@ -29,7 +29,6 @@ for member_page in Source_Page.select(
 
 		while content == None:
 			try:
-				print 'Trying....'
 				content = get_content(member_page, r_sesh)
 			except requests.exceptions.ConnectionError, e:
 				print e
