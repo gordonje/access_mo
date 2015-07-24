@@ -8,7 +8,8 @@ for bill_page in Source_Page.select(
 							).join(
 								parent, on=(Source_Page.parent_id == parent.id).alias('parent')
 							).where(
-								fn.lower(Source_Page.url) % '%bil%list%'
+								fn.lower(Source_Page.url).contains('billist') |
+								fn.lower(Source_Page.url).contains('billlist')
 						    ).order_by(
 						    	Source_Page.chamber.desc(), Source_Page.year.desc()
 						    ):
@@ -29,22 +30,22 @@ for bill_page in Source_Page.select(
 
 		name = re.sub('\s{2,}', ' ', link['name']).strip()
 
-		if re.search('\d+', name):
+		if re.match('\D+_\d+', name):
 
 			link['name'] = name
 			link['year'] = bill_page.year
 			link['parent_id'] = bill_page.id
 			link['file_name'] = '{0}{1}.html'.format(directory, link['name'].replace(' ', '_'))
 
-		try:
-			with db.atomic():
-				new_page = Source_Page.create(**link)
-		except:
-			pass
-		else:
 			try:
-				get_content(new_page, r_sesh)
+				with db.atomic():
+					new_page = Source_Page.create(**link)
 			except:
-				print '      Lost connection, resetting session...'
-				r_sesh = session()
-				get_content(new_page, r_sesh)
+				pass
+			else:
+				try:
+					get_content(new_page, r_sesh)
+				except:
+					print '      Lost connection, resetting session...'
+					r_sesh = session()
+					get_content(new_page, r_sesh)
