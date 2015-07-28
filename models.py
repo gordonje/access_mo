@@ -31,27 +31,6 @@ class BaseModel(Model):
 		database = db
 
 
-class Source_Page(BaseModel):
-	url = CharField()
-	scheme = CharField()
-	netloc = CharField()
-	path = CharField()
-	params = CharField(null = True)
-	query = CharField(null = True)
-	fragment = CharField(null = True)
-	chamber = CharField()
-	year = IntegerField()
-	name = CharField()
-	file_name = CharField(unique = True)
-	parent_id = IntegerField(default = 0)
-	created_date = DateTimeField(default = datetime.now)
-
-	class Meta:
-		indexes = (
-			(('url', 'parent_id'), True),
-		)
-
-
 class Assembly(BaseModel):
 	id = IntegerField(primary_key = True)
 	name = CharField()	
@@ -60,20 +39,53 @@ class Assembly(BaseModel):
 	end_year = IntegerField()
 
 
+class Session_Type(BaseModel):
+	id = CharField(primary_key = True)
+	name = CharField(unique = True)
+	created_date = DateTimeField(default = datetime.now)
+
+
+class Session(BaseModel):
+	assembly = ForeignKeyField(Assembly, related_name = 'sessions')
+	year = IntegerField()
+	session_type = ForeignKeyField(Session_Type)
+	year_type_num = IntegerField(default = 1)
+	name = CharField()
+	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		indexes = (
+			(('assembly', 'year', 'session_type', 'year_type_num'), True),
+		)
+
+
 class Chamber(BaseModel):
 	id = CharField(primary_key = True)
 	name = CharField()
 	title = CharField()
 	full_title = CharField()
-	past_sessions_url = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
 
-class Committee(BaseModel):
-	# Is it the same committees with the same names for all sessions?
+class Source_Doc(BaseModel):
 	name = CharField()
-	chamber = ForeignKeyField(Chamber, related_name = 'committees')
+	session = ForeignKeyField(Session, null = True, related_name = 'source_docs')
+	chamber = ForeignKeyField(Chamber)
+	url = CharField()
+	scheme = CharField()
+	netloc = CharField()
+	path = CharField()
+	params = CharField(null = True)
+	query = CharField(null = True)
+	fragment = CharField(null = True)
+	file_name = CharField()
+	parent = ForeignKeyField('self', null = True, related_name = 'children')
 	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		indexes = (
+			(('url', 'parent', 'file_name'), True),
+		)
 
 
 class Person(BaseModel):
@@ -88,40 +100,62 @@ class Person(BaseModel):
 		)
 
 
-class Legislator_Assembly(BaseModel):
-	person = ForeignKeyField(Person, related_name = 'terms')
+class Assembly_Member(BaseModel):
 	assembly = ForeignKeyField(Assembly, related_name = 'members')
+	person = ForeignKeyField(Person, related_name = 'terms')
 	chamber = ForeignKeyField(Chamber)
-	party = CharField()
+	party = CharField(null = True)
 	district = CharField()
 	counties = CharField(null = True)
-	source_page = ForeignKeyField(Source_Page)
+	source_doc = ForeignKeyField(Source_Doc)
 	created_date = DateTimeField(default = datetime.now)
 
 	class Meta:
 		indexes = (
-			(('person', 'assembly'), True),
+			(('assembly', 'person', 'chamber'), True),
 		)
 
 
-class Session_Type(BaseModel):
-	id = CharField(primary_key = True)
-	name = CharField(unique = True)
+class District_Vacancy(BaseModel):
+	session = ForeignKeyField(Session, related_name = 'vacancies')
+	chamber = ForeignKeyField(Chamber, related_name = 'vacancies')
+	district = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
+	class Meta:
+		indexes = (
+			(('session', 'chamber', 'district'), True),
+		)
 
-class Session(BaseModel):
-	assembly = ForeignKeyField(Assembly, related_name = 'sessions')
-	year = IntegerField()
-	session_type = ForeignKeyField(Session_Type)
+
+class Committee(BaseModel):
+	# Is it the same committees with the same names for all sessions?
+	chamber = ForeignKeyField(Chamber, related_name = 'committees')
 	name = CharField()
 	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		indexes = (
+			(('chamber', 'name'), True),
+		)
+
+class Committee_Member(BaseModel):
+	# Are the appointments for each session or each assembly?
+	committee = ForeignKeyField(Committee, related_name = 'members')
+	member = ForeignKeyField(Assembly_Member, related_name = 'committees')
+	# is_chair = BooleanField(default = False)
+	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		indexes = (
+			(('committee', 'member'), True),
+		)
 
 
 class Bill_Type(BaseModel):
 	id = CharField(primary_key = True)
 	name = CharField()
-	chamber = ForeignKeyField(Chamber, related_name = 'bill_types')
+	chamber = ForeignKeyField(Chamber, null = True, related_name = 'bill_types')
 	created_date = DateTimeField(default = datetime.now)
 
 
@@ -129,13 +163,15 @@ class Bill(BaseModel):
 	session = ForeignKeyField(Session, related_name = 'bills')
 	bill_type = ForeignKeyField(Bill_Type)
 	number = IntegerField()
+	bill_string = CharField()
 	title = CharField(null = True)
 	description = CharField(null = True)
-	lr_number = CharField(null = True)
-	sponsor = ForeignKeyField(Legislator_Assembly, null = True, related_name = 'sponsored_bills')
+	lr_number = CharField()
+	sponsor = ForeignKeyField(Assembly_Member, null = True, related_name = 'sponsored_bills')
+	sponsor_string = CharField()
 	committee = ForeignKeyField(Committee, null = True)
-	effective_date = DateField(null = True)
-	source_page = ForeignKeyField(Source_Page)
+	effective_date = CharField()
+	source_doc = ForeignKeyField(Source_Doc)
 	created_date = DateTimeField(default = datetime.now)
 	# BillCombinedWith
 	# last_action_date,
@@ -151,9 +187,31 @@ class Bill(BaseModel):
 		)
 
 
+class Bill_Summary(BaseModel):
+	bill = ForeignKeyField(Bill, related_name = 'summary_versions')
+	description = CharField()
+	order = IntegerField()
+	summary = TextField()
+	source_doc = ForeignKeyField(Source_Doc)	
+
+
+class Bill_Text(BaseModel):
+	bill = ForeignKeyField(Bill, related_name = 'text_versions')
+	description = CharField()
+	order = IntegerField()
+	text = TextField()
+	source_doc = ForeignKeyField(Source_Doc)
+
+
 class Bill_Cosponsor(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'cosponsors')
+	co_sponsor = ForeignKeyField(Assembly_Member, related_name = 'cosponsored_bills')
 	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		indexes = (
+			(('bill', 'co_sponsor'), True),
+		)
 
 
 class Bill_Action(BaseModel):
@@ -165,12 +223,26 @@ class Bill_Action(BaseModel):
 	created_date = DateTimeField(default = datetime.now)
 
 
-class Bill_Amendment(BaseModel):
-	bill = ForeignKeyField(Bill, related_name = 'amendments')
-	lr_number = CharField()
-	status = CharField()
-	StatusDate = CharField()
-	created_date = DateTimeField(default = datetime.now)
+# # Looks like Amendments will be hard to get for historic data.
+# # Probably doesn't matter for old bills anyway.
+# class Bill_Amendment(BaseModel):
+# 	bill = ForeignKeyField(Bill, related_name = 'amendments')
+# 	lr_number = CharField()
+# 	status = CharField()
+# 	status_date = CharField()
+#	text = TextField()
+#	source_doc = ForeignKeyField(Source_Doc)
+# 	created_date = DateTimeField(default = datetime.now)
+
+
+# # might also consider collecting the bill fiscal notes
+# class Bill_Fiscal_Note(BaseModel):
+# 	bill = ForeignKeyField(Bill, related_name = 'fiscal_notes')
+# 	description = CharField()
+# 	order = IntegerField()
+#	text = TextField()
+#	source_doc = ForeignKeyField(Source_Doc)
+# 	created_date = DateTimeField(default = datetime.now)
 
 
 class Bill_Topic(BaseModel):
@@ -178,11 +250,8 @@ class Bill_Topic(BaseModel):
 	topic = CharField()
 	created_date = DateTimeField(default = datetime.now)
 
-
-class Legislator_Committee(BaseModel):
-	# Are the appointments for each session or each assembly?
-	legislator_assembly = ForeignKeyField(Legislator_Assembly, related_name = 'committees')
-	committee = ForeignKeyField(Committee, related_name = 'legislators')
-	# is_chair = BooleanField(default = False)
-	created_date = DateTimeField(default = datetime.now)
+	class Meta:
+		indexes = (
+			(('bill', 'topic'), True),
+		)
 

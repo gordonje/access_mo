@@ -1,7 +1,51 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import requests
 from utils import *
+from models import *
 
+def get_or_create_session(assembly, year, session_type, name, year_type_num = None):
+	""" Returns a session object from the database.
+		If there isn't already one in the database, creates a new one.
+		The year_type_num arg is really only relevant to extraordinary sessions. """
+	if session_type == 'R':
+		try:
+			with db.atomic():
+				sess = Session.create(
+					  assembly = assembly
+					, year = year
+					, session_type = session_type
+					, name = name
+				)
+		except IntegrityError:
+			sess = Session.get(
+				  assembly = assembly
+				, year = year
+				, session_type = session_type
+			)
+	elif session_type == 'E':
+		try:
+			with db.atomic():
+				sess = Session.create(
+					  assembly = assembly
+					, year = year
+					, session_type = session_type
+					, name = name
+					, year_type_num = year_type_num
+				)
+		except IntegrityError:
+			sess = Session.get(
+				  assembly = assembly
+				, year = year
+				, session_type = session_type
+				, year_type_num = year_type_num
+			)
+
+	return sess
+
+# set up directories, if necessary
 if not os.path.exists('past_content/'):
 	os.makedirs('past_content/')
 
@@ -11,99 +55,108 @@ if not os.path.exists('past_content/H/'):
 if not os.path.exists('past_content/S/'):
 	os.makedirs('past_content/S/')
 
-with requests.session() as r_sesh:
+# set up a requests session
+with requests.session() as requests_session:
 
-	for chamber in Chamber.select():
+	# for each chamber's past session url...
+	for chamber in Source_Doc.select().where(Source_Doc.parent >> None
+									 ).order_by(Source_Doc.chamber.desc()):
 
-		response = r_sesh.get(chamber.past_sessions_url)
+		# request the page containing the list of past sessions
+		response = requests_session.get(chamber.url)
 
-		for link in extract_links(response.content, chamber.past_sessions_url):
+		# for each link extracted from the page...
+		for link in extract_links(response.content, chamber.url):
 			
-			link['year'] = re.search("\d{4}", link['name']).group()
-			link['name'] = re.sub("\d{4}", "", link['name']).lstrip(' - ').strip()
-			link['file_name'] = 'past_content/{0}/{1}_{2}.html'.format(link['chamber'], link['year'], link['name'].replace(' ', '_'))
+		# first, set up the legislative session
+			sess_data = {
+				  'year': int(re.search("\d{4}", link['name']).group())
+				, 'name': re.sub("\d{4}", "", link['name']).replace('- ', '').strip()
+			}
 
-			try:
-				with db.atomic():
-					Source_Page.create(**link)
-			except IntegrityError:
-				pass
-				
-	# go through each session
-
-	for sess_page in Source_Page.select(
-							   ).where(Source_Page.parent_id == 0 
-							   ).order_by(
-							   		Source_Page.chamber
-							   	  , Source_Page.year.desc()
-							   ):
-
-		# create a new session, if necessary
-
-		# going to use the senate as the authoritative list of sessions
-		if sess_page.chamber == 'S':
-		# even numbered years are the second of assemblies, odd years are the first of assemblies
-
-			if 'Extraordinary' in sess_page.name:
-				session_type = 'E'
+			# assemblies last two years and end on even-numbered years
+			if sess_data['year'] % 2 == 0:
+				sess_data['assembly'] = Assembly.get(Assembly.end_year == sess_data['year'])
 			else:
-				session_type = 'R'
+				sess_data['assembly'] = Assembly.get(Assembly.start_year == sess_data['year'])
 
-			if sess_page.year % 2 == 0:
-				assembly = Assembly.get(Assembly.end_year == sess_page.year)
+			if 'Extraordinary' in link['name']:
+				# extraordinary sessions need the year added to the name
+				sess_data['session_type'] = 'E'
+				# and there can be more than one extraordinary session in the same year
+				sess_data['name'] = '{0} {1}'.format(sess_data['year'], sess_data['name'].replace('- ', ''))
+				# this is a total hack and will only work as long as there are one or two extraordinary sessions
+				if '2nd' in link['name'] or 'Second' in link['name']:
+					sess_data['year_type_num'] = 2
+				else:
+					sess_data['year_type_num'] = 1
 			else:
-				assembly = Assembly.get(Assembly.start_year == sess_page.year)
+				sess_data['session_type'] = 'R'
 
-			Session.get_or_create(
-				  assembly = assembly
-				, year = sess_page.year
-				, session_type = session_type
-				, name = sess_page.name
-			)
+			# create the legislative session, or get the id of an exising one
+			link['session'] = get_or_create_session(**sess_data).id
 
-		# now collect all the urls within the session page
+		# then, set up the source doc 
+			link['parent'] = chamber.id
+			link['name'] = sess_data['name']
+			link['file_name'] = 'past_content/{0}/{1}_{2}.html'.format(
+									  link['chamber']
+									, sess_data['year']
+									, re.sub('^\d{4}\s', '', sess_data['name']).replace(' ', '_')
+								)
 
-		print 'Getting urls for {0} {1} {2}...'.format(sess_page.chamber, sess_page.year, sess_page.name)
+			# create the source doc in the db
+			Source_Doc.create_or_get(**link)
 
-		directory = 'past_content/{0}/{1}_{2}/'.format(sess_page.chamber, sess_page.year, sess_page.name.replace(' ', '_'))
+		# then, for each session page of each chamber, request the session page and get the urls
+		for session_page in chamber.children:
 
-		if not os.path.exists(directory):
-			os.makedirs(directory)
+			print '    Getting urls for {0} {1} {2}...'.format(
+					  session_page.chamber.id
+					, session_page.session.year
+					, session_page.name
+				)
 
-		content = None
-		
-		while content == None:
-			try:
-				content = get_content(sess_page, r_sesh)
-			except requests.exceptions.ConnectionError, e:
-				print e
-				print '   Connection failed. Retrying...'
-				r_sesh = requests.session()
-			except Exception, e:
-				print 'Whaa happen?'
-				print e
-
-		for link in extract_links(content, sess_page.url):
-
-			name = re.sub('\s{2,}', ' ', link['name']).strip()
-
-			if len(name) > 0:
-
-				link['name'] = name
-				link['year'] = sess_page.year
-				link['parent_id'] = sess_page.id
-				link['file_name'] = 'past_content/{0}/{1}_{2}/{3}.html'.format(sess_page.chamber, sess_page.year, sess_page.name.replace(' ', '_'), link['name'].replace(' ', '_'))
-
+			content = None
+			# get the past session page content
+			while content == None:
 				try:
-					with db.atomic():
-						Source_Page.create(**link)
-				except IntegrityError:
-					pass
+					content = get_content(session_page, requests_session)
+				except requests.exceptions.ConnectionError, e:
+					print e
+					print '   Connection failed. Retrying...'
+					requests_session = requests.session()
+				except Exception, e:
+					print e
 
-		# there's an additional 2001 extraordinary session that the senate is missing
-		# house page is http://house.mo.gov/billtracking/spec01/billist.htm
-		# senate page is http://www.senate.mo.gov/01info/sp/bil-list.htm
+			# set up a diretory for each session, if necessary
+			directory = 'past_content/{0}/{1}_{2}/'.format(
+					  session_page.chamber.id
+					, session_page.session.year
+					, session_page.name.replace(' ', '_')
+				)
 
-		Session.get_or_create(assembly = 91, session_type = 'E', name = '2001 Extraordinary Session', year = 2001)
+			if not os.path.exists(directory):
+				os.makedirs(directory)
+
+			# for each on the past session page...
+			for link in extract_links(content, session_page.url):
+
+				name = re.sub('\s{2,}', ' ', link['name']).strip()
+
+		# 		ignore links without any text (e.g., images to return to homepage)
+				if len(name) > 0:
+
+					link['name'] = name
+					link['session'] = session_page.session.id
+					link['parent'] = session_page.id
+					link['file_name'] = 'past_content/{0}/{1}_{2}/{3}.html'.format(
+							  session_page.chamber.id
+							, session_page.session.year
+							, session_page.name.replace(' ', '_'), link['name'].replace(' ', '_')
+						)
+
+					Source_Doc.create_or_get(**link)
 
 print 'fin.'
+	
