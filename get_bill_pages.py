@@ -17,7 +17,7 @@ with requests.session() as requests_session:
 				):
 
 			if bills_list_page.chamber.id == 'H': # remove this line later
-				if session.year <= 2010 & session.year != 2008: #remove this line later
+				if session.year <= 2010: #remove this line later
 
 					print '   Getting bill links for {0} {1} {2}...'.format(
 								  bills_list_page.chamber.id
