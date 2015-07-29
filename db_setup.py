@@ -50,18 +50,18 @@ with open('look_ups/chambers.csv', 'rU', ) as f:
 			print e
 
 past_session_urls = [
-	  { 
-		  'url': 'http://www.senate.mo.gov/pastsessions.htm'
-		, 'name': 'Past Senate Sessions'
-		, 'chamber': 'S'
-		, 'file_name': 'Need to regularly check: http://www.senate.mo.gov/pastsessions.htm'
-	  }
-	, {
+	{
 		  'url': 'http://www.house.mo.gov/sitemap.aspx?pid=24'
 		, 'name': 'Past House Sessions'
 		, 'chamber': 'H'
 		, 'file_name': 'Need to regularly check: http://www.house.mo.gov/sitemap.aspx?pid=24'
 	}
+	, { 
+		  'url': 'http://www.senate.mo.gov/pastsessions.htm'
+		, 'name': 'Past Senate Sessions'
+		, 'chamber': 'S'
+		, 'file_name': 'Need to regularly check: http://www.senate.mo.gov/pastsessions.htm'
+	  }
 ]
 
 for url in past_session_urls:

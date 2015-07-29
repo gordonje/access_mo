@@ -71,7 +71,7 @@ with requests.session() as requests_session:
 		# first, set up the legislative session
 			sess_data = {
 				  'year': int(re.search("\d{4}", link['name']).group())
-				, 'name': re.sub("\d{4}", "", link['name']).replace('- ', '').strip()
+				, 'name': link['name'].replace('- ', '').strip()
 			}
 
 			# assemblies last two years and end on even-numbered years
@@ -81,10 +81,10 @@ with requests.session() as requests_session:
 				sess_data['assembly'] = Assembly.get(Assembly.start_year == sess_data['year'])
 
 			if 'Extraordinary' in link['name']:
-				# extraordinary sessions need the year added to the name
 				sess_data['session_type'] = 'E'
-				# and there can be more than one extraordinary session in the same year
-				sess_data['name'] = '{0} {1}'.format(sess_data['year'], sess_data['name'].replace('- ', ''))
+				# # extraordinary sessions need the year added to the name
+				# # and there can be more than one extraordinary session in the same year
+				# sess_data['name'] = '{0} {1}'.format(sess_data['year'], sess_data['name'].replace('- ', ''))
 				# this is a total hack and will only work as long as there are one or two extraordinary sessions
 				if '2nd' in link['name'] or 'Second' in link['name']:
 					sess_data['year_type_num'] = 2
@@ -99,11 +99,9 @@ with requests.session() as requests_session:
 		# then, set up the source doc 
 			link['parent'] = chamber.id
 			link['name'] = sess_data['name']
-			link['file_name'] = 'past_content/{0}/{1}_{2}.html'.format(
+			link['file_name'] = 'past_content/{0}/{1}.html'.format(
 									  link['chamber']
-									, sess_data['year']
-									, re.sub('^\d{4}\s', '', sess_data['name']).replace(' ', '_')
-								)
+									, sess_data['name']).replace(' ', '_')
 
 			# create the source doc in the db
 			Source_Doc.create_or_get(**link)
@@ -111,9 +109,8 @@ with requests.session() as requests_session:
 		# then, for each session page of each chamber, request the session page and get the urls
 		for session_page in chamber.children:
 
-			print '    Getting urls for {0} {1} {2}...'.format(
+			print '    Getting urls for {0} {1}...'.format(
 					  session_page.chamber.id
-					, session_page.session.year
 					, session_page.name
 				)
 
@@ -130,10 +127,9 @@ with requests.session() as requests_session:
 					print e
 
 			# set up a diretory for each session, if necessary
-			directory = 'past_content/{0}/{1}_{2}/'.format(
+			directory = 'past_content/{0}/{1}/'.format(
 					  session_page.chamber.id
-					, session_page.session.year
-					, session_page.name.replace(' ', '_')
+					, session_page.name.replace('.html', '').replace(' ', '_')
 				)
 
 			if not os.path.exists(directory):
@@ -150,10 +146,10 @@ with requests.session() as requests_session:
 					link['name'] = name
 					link['session'] = session_page.session.id
 					link['parent'] = session_page.id
-					link['file_name'] = 'past_content/{0}/{1}_{2}/{3}.html'.format(
+					link['file_name'] = 'past_content/{0}/{1}/{2}.html'.format(
 							  session_page.chamber.id
-							, session_page.session.year
-							, session_page.name.replace(' ', '_'), link['name'].replace(' ', '_')
+							, session_page.name.replace(' ', '_')
+							, link['name'].replace(' ', '_')
 						)
 
 					Source_Doc.create_or_get(**link)
