@@ -14,6 +14,7 @@ def get_content(source_doc_obj, request_session):
 		with open(source_doc_obj.file_name, 'r') as f:
 			content = f.read()
 	except:
+		print '   No file found. Downloading...'
 		sleep(3)
 		response = request_session.get(source_doc_obj.url)
 		content = response.content

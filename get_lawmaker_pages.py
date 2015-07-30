@@ -14,16 +14,14 @@ with requests.session() as requests_session:
 		# get the member list page for each session (one for each chamber)
 		for members_list_page in session.source_docs.where(
 				Source_Doc.name.contains('Roster') | Source_Doc.name.contains('Senators')):
-			print '   Getting members for {0} {1} {2}...'.format(
+			print '   Getting members for {0} {1}...'.format(
 						  members_list_page.chamber.id
-						, session.year
 						, session.name
 				)
 			
 			# create a members folder in each session folder, if necessary
-			directory = 'past_content/{0}/{1}_{2}/members'.format(
+			directory = 'past_content/{0}/{1}/members'.format(
 						  members_list_page.chamber.id
-						, session.year
 						, members_list_page.parent.name.replace(' ', '_')
 				) 
 			
