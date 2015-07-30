@@ -289,6 +289,7 @@ with requests.session() as requests_session:
 
 			# now, loop over all the members collected on the page
 			for member in members:
+				# either create or get the member's source page
 				try:
 					with db.atomic():
 						member['source_doc'] = Source_Doc.create(
@@ -325,6 +326,7 @@ with requests.session() as requests_session:
 							))
 					)
 
+				# then either create or get a person record
 				try:
 					with db.atomic():
 						member['person'] = Person.create(
@@ -335,12 +337,14 @@ with requests.session() as requests_session:
 				except Exception, e:
 					member['person'] = Person.get(first_name = member['first'], last_name = member['last'])
 
+				# then try making the member record
 				try:
 					with db.atomic():
 						Assembly_Member.create(**member)
-				except Exception, e:
+				except Exception, e: # should be more specific
 					pass
 
+				# then, if necessary, download the member's page content
 				content = None
 
 				while content == None:
