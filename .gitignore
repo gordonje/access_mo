@@ -62,3 +62,5 @@ config.py
 past_content/*
 csvs/*
 test.py
+notes.txt
+candidates.txt
