@@ -119,11 +119,11 @@ with requests.session() as requests_session:
 			while content == None:
 				try:
 					content = get_content(session_page, requests_session)
-				except requests.exceptions.ConnectionError, e:
+				except requests.exceptions.ConnectionError as e:
 					print e
 					print '   Connection failed. Retrying...'
 					requests_session = requests.session()
-				except Exception, e:
+				except Exception as e:
 					print e
 
 			# set up a diretory for each session, if necessary

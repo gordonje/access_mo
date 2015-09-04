@@ -100,19 +100,32 @@ class Person(BaseModel):
 		)
 
 
+# class Legislator(BaseModel):
+# 	person = ForeignKeyField(Person, related_name = 'legislative_offices')
+# 	chamber = ForeignKeyField(Chamber)
+# 	district = IntegerField()
+# 	created_date = DateTimeField(default = datetime.now)
+
+# 	class Meta:
+# 		indexes = (
+# 			(('person', 'chamber', 'district'), True),
+# 		)
+
+
 class Assembly_Member(BaseModel):
 	assembly = ForeignKeyField(Assembly, related_name = 'members')
-	person = ForeignKeyField(Person, related_name = 'terms')
+	person = ForeignKeyField(Person, related_name = 'assemblies')
+	# legislator = ForeignKeyField(Legislator, related_name = 'assemblies')
 	chamber = ForeignKeyField(Chamber)
+	district = IntegerField()
 	party = CharField(null = True)
-	district = CharField()
 	counties = CharField(null = True)
 	source_doc = ForeignKeyField(Source_Doc)
 	created_date = DateTimeField(default = datetime.now)
 
 	class Meta:
 		indexes = (
-			(('assembly', 'person', 'chamber'), True),
+			(('assembly', 'person', 'chamber', 'district'), True),
 		)
 
 
@@ -163,21 +176,20 @@ class Bill(BaseModel):
 	session = ForeignKeyField(Session, related_name = 'bills')
 	bill_type = ForeignKeyField(Bill_Type)
 	number = IntegerField()
-	bill_string = CharField()
+	bill_string = CharField(null = True)
 	title = CharField(null = True)
-	description = CharField(null = True)
+	description = TextField(null = True)
 	lr_number = CharField()
 	sponsor = ForeignKeyField(Assembly_Member, null = True, related_name = 'sponsored_bills')
-	sponsor_string = CharField()
+	sponsor_string = CharField(null = True)
+	co_sponsor_string = CharField(null = True)
+	co_sponsor_link = CharField(null = True)
 	committee = ForeignKeyField(Committee, null = True)
 	effective_date = CharField()
-	source_doc = ForeignKeyField(Source_Doc)
+	source_doc = ForeignKeyField(Source_Doc, null = True)
 	created_date = DateTimeField(default = datetime.now)
-	# BillCombinedWith
-	# last_action_date,
-	# last_action_desc,
-	# next_hearing,
-	# calendar
+	combined_with = CharField(null = True)
+	stricken_from_calendar = BooleanField(default = False)
 
 	# can the same bill show up in a regular and extraordinary session?
 	
@@ -217,10 +229,24 @@ class Bill_Cosponsor(BaseModel):
 class Bill_Action(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'actions')
 	action_date = DateField()
-	description = CharField()
-	journal_page1 = CharField()
-	journal_page2 = CharField()
+	description = TextField()
+	description_link = CharField(null = True)
+	aye_count = IntegerField(null = True)
+	no_count = IntegerField(null = True)
+	present_count = IntegerField(null = True)
 	created_date = DateTimeField(default = datetime.now)
+
+	class Meta:
+		indexes = (
+			(('bill', 'action_date', 'description'), True),
+		)
+
+class Bill_Action_Journal_Page(BaseModel):
+	bill_action = ForeignKeyField(Bill_Action, related_name = 'journal_pages')
+	chamber = ForeignKeyField(Chamber, null = True)
+	first_page = IntegerField()
+	last_page = IntegerField()
+	journal_link = CharField(null = True)
 
 
 # # Looks like Amendments will be hard to get for historic data.
@@ -254,4 +280,46 @@ class Bill_Topic(BaseModel):
 		indexes = (
 			(('bill', 'topic'), True),
 		)
+
+
+class Election_Type(BaseModel):
+	name = CharField(unique = True)
+
+
+class Election(BaseModel):
+	election_date = DateField()
+	election_type = ForeignKeyField(Election_Type, related_name = 'elections')
+	file_name = CharField(null = True)
+
+
+class Race_Type(BaseModel):
+	name = CharField(unique = True)
+
+
+class Race(BaseModel):
+	election = ForeignKeyField(Election, related_name = 'races')
+	race_type = ForeignKeyField(Race_Type, related_name = 'races')
+	district = IntegerField(null = True)
+	unexpired = BooleanField(null = True)
+	num_precincts = IntegerField(null = True)
+	total_votes = IntegerField()
+
+
+class Race_Candidate(BaseModel):
+	race = ForeignKeyField(Race, related_name = 'candidates')
+	raw_name = CharField()
+	first_name = CharField()
+	middle_name = CharField(null = True)
+	last_name = CharField()
+	nickname = CharField(null = True)
+	name_suffix = CharField(null = True)
+	party = CharField()
+	votes = IntegerField()
+	pct_votes = FloatField()
+
+	class Meta:
+		indexes = (
+			(('race', 'raw_name'), True),
+		)
+
 

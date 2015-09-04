@@ -12,6 +12,7 @@ db.create_tables([
 				, Session_Type
 				, Session
 				, Source_Doc
+				# , Legislator
 				, Assembly_Member
 				, District_Vacancy
 				, Bill_Type
@@ -19,11 +20,17 @@ db.create_tables([
 				, Bill_Cosponsor
 				# , Bill_Amendment
 				, Bill_Action
+				, Bill_Action_Journal_Page
 				, Bill_Summary
 				, Bill_Text
 				, Bill_Topic
 				, Committee
 				, Committee_Member
+				, Election_Type
+				, Election
+				, Race_Type
+				, Race
+				, Race_Candidate
 			], True)
 
 
@@ -35,8 +42,11 @@ with open('look_ups/assemblies.csv', 'rU', ) as f:
 		try:
 			with db.atomic():
 				Assembly.create(**row)
-		except Exception, e:
-			print e
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e
 
 with open('look_ups/chambers.csv', 'rU', ) as f:
 	reader = csv.DictReader(f)
@@ -46,8 +56,11 @@ with open('look_ups/chambers.csv', 'rU', ) as f:
 		try:
 			with db.atomic():
 				Chamber.create(**row)
-		except Exception, e:
-			print e
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e
 
 past_session_urls = [
 	{
@@ -76,8 +89,11 @@ for url in past_session_urls:
 	try:
 		with db.atomic():
 			Source_Doc.create(**url)
-	except Exception, e:
-		print e
+	except Exception as e:
+		if 'duplicate' in e.message:
+			pass
+		else:
+			print e
 
 
 with open('look_ups/session_types.csv', 'rU', ) as f:
@@ -88,19 +104,51 @@ with open('look_ups/session_types.csv', 'rU', ) as f:
 		try:
 			with db.atomic():
 				Session_Type.create(**row)
-		except Exception, e:
-			print e
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e
 
 
 with open('look_ups/bill_types.csv', 'rU', ) as f:
 	reader = csv.DictReader(f)
 
 	for row in reader:
-		# row['chamber'] = Chamber.get(id = row['chamber'])
+		
 		try:
 			with db.atomic():
 				Bill_Type.create(**row)
-		except Exception, e:
-			print 'Error when making bill type'
-			print e
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e
 
+with open('look_ups/election_types.csv', 'rU', ) as f:
+	reader = csv.DictReader(f)
+
+	for row in reader:
+
+		try:
+			with db.atomic():
+				Election_Type.create(**row)
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e
+
+with open('look_ups/race_types.csv', 'rU', ) as f:
+	reader = csv.DictReader(f)
+
+	for row in reader:
+
+		try:
+			with db.atomic():
+				Race_Type.create(**row)
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e

@@ -34,7 +34,7 @@ with requests.session() as requests_session:
 			while content == None:
 				try:
 					content = get_content(members_list_page, requests_session)
-				except requests.exceptions.ConnectionError, e:
+				except requests.exceptions.ConnectionError as e:
 					print e
 					print '   Connection failed. Retrying...'
 					requests_session = requests.session()
@@ -75,9 +75,11 @@ with requests.session() as requests_session:
 											, session = session.id
 											, chamber = member['chamber']
 										)
-							except Exception, e:
-								print 'Duplicate District_Vacancy'
-								print e
+							except Exception as e:
+								if 'duplicate' in e.message:
+									pass
+								else:
+									print e
 						else:
 							# if there is a middle name, it's found in second field along with the first name
 							member['last'] = last
@@ -86,7 +88,7 @@ with requests.session() as requests_session:
 							member['first'] = first_middle.pop(0)
 							try:
 								member['middle'] = first_middle.pop()
-							except Exception, e:
+							except IndexError:
 								member['middle'] = None
 
 							member['party'] = tds[3].text.strip()
@@ -109,8 +111,14 @@ with requests.session() as requests_session:
 						# for some reason this check works: look in the first td for a link with a url
 						try:
 							tds[0].find('a')['href']
-						except Exception, e:
+						except (AttributeError, KeyError, TypeError, IndexError):
 							pass
+						except Exception as e:
+							print type(e)
+							print e.message
+							print e.args
+							print e
+
 						else:
 							name = tds[0].text.strip().split()
 							d_p = tds[1].text.split('-')
@@ -128,17 +136,22 @@ with requests.session() as requests_session:
 												, session = session.id
 												, chamber = member['chamber']
 											)
-								except Exception, e:
-									print 'Duplicate District_Vacancy'
-									print e
+								except Exception as e:
+									if 'duplicate' in e.message:
+										pass
+									else:
+										print e
+
 							else:
 								member['last'] = name.pop(-1)
 								member['first'] = name.pop(0)
 								try:
 									member['middle'] = name.pop()
-								except:
+								except IndexError:
 									member['middle'] = None
+								
 								member['party'] = d_p[1].strip()
+								
 								if member['party'] == '':
 									member['party'] = None
 
@@ -187,16 +200,20 @@ with requests.session() as requests_session:
 												, session = session.id
 												, chamber = member['chamber']
 											)
-								except Exception, e:
-									print 'Duplicate District_Vacancy'
-									print e
+								except Exception as e:
+									if 'duplicate' in e.message:
+										pass
+									else:
+										print e
 							else:
 								member['last'] = name.pop(-1)
 								member['first'] = name.pop(0)
+
 								try:
 									member['middle'] = name.pop()
-								except:
+								except IndexError:
 									member['middle'] = None
+
 								member['party'] = p_d[0]
 								member['district'] = p_d[1]
 								member['url'] = tds[0].find('a')['href']
@@ -228,15 +245,20 @@ with requests.session() as requests_session:
 												, session = session.id
 												, chamber = member['chamber']
 											)
-								except Exception, e:
-									print e
+								except Exception as e:
+									if 'duplicate' in e.message:
+										pass
+									else:
+										print e
 							else:
 								member['last'] = name.pop(-1)
 								member['first'] = name.pop(0)
+								
 								try:
 									member['middle'] = name.pop()
-								except:
+								except IndexError:
 									member['middle'] = None
+
 								member['party'] = p_d[0]
 								member['district'] = p_d[1]
 								member['url'] = link['href']
@@ -266,15 +288,20 @@ with requests.session() as requests_session:
 												, session = session.id
 												, chamber = member['chamber']
 											)
-								except Exception, e:
-									print e
+								except Exception as e:
+									if 'duplicate' in e.message:
+										pass
+									else:
+										print e
 							else:
 								member['last'] = name.pop(-1)
 								member['first'] = name.pop(0)
+								
 								try:
 									member['middle'] = name.pop()
-								except:
+								except IndexError:
 									member['middle'] = None
+								
 								# party cannot be found on these pages
 								member['party'] = None
 
@@ -289,7 +316,8 @@ with requests.session() as requests_session:
 
 			# now, loop over all the members collected on the page
 			for member in members:
-				# either create or get the member's source page
+				# either create or get the member's source 
+
 				try:
 					with db.atomic():
 						member['source_doc'] = Source_Doc.create(
@@ -309,22 +337,26 @@ with requests.session() as requests_session:
 											, urlparse(member['url']).fragment
 										))
 									, name = '{0} {1}'.format(member['first'], member['last'])
-									, file_name = '{0}/{1}.html'.format(directory, member['district'])
+									, file_name = '{0}/{1}_{2}.html'.format(directory, member['last'], member['district'])
 									, parent = members_list_page.id
 									, session = session.id
 						)
-				except Exception, e:
-					member['source_doc'] = Source_Doc.get( 
-						  file_name = '{0}/{1}.html'.format(directory, member['district'])
-						, url = urlunparse((
-								  urlparse(members_list_page.url).scheme
-								, urlparse(members_list_page.url).netloc
-								, urlparse(member['url']).path
-								, urlparse(member['url']).params
-								, urlparse(member['url']).query
-								, urlparse(member['url']).fragment
-							))
-					)
+				except Exception as e:
+					if 'duplicate' in e.message:
+						member['source_doc'] = Source_Doc.select(
+								).where(
+									  Source_Doc.file_name == '{0}/{1}_{2}.html'.format(directory, member['last'], member['district'])
+									, Source_Doc.url == urlunparse((
+											  urlparse(members_list_page.url).scheme
+											, urlparse(members_list_page.url).netloc
+											, urlparse(member['url']).path
+											, urlparse(member['url']).params
+											, urlparse(member['url']).query
+											, urlparse(member['url']).fragment
+										))
+							   ).get()
+					else:
+						print e
 
 				# then either create or get a person record
 				try:
@@ -334,15 +366,28 @@ with requests.session() as requests_session:
 										, middle_name = member['middle']
 										, last_name = member['last']
 							)
-				except Exception, e:
-					member['person'] = Person.get(first_name = member['first'], last_name = member['last'])
+				except Exception as e:
+					if 'duplicate' in e.message:
+						member['person'] = Person.get(first_name = member['first'], last_name = member['last'])
+					else:
+						print e
+
+				# then either create or get the legislator record
+				# member['legislator'] = Legislator.create_or_get(
+				# 						  person = person
+				# 						, district = member['district']
+				# 						, chamber = member['chamber']
+				# 			)[0]
 
 				# then try making the member record
 				try:
 					with db.atomic():
 						Assembly_Member.create(**member)
-				except Exception, e: # should be more specific
-					pass
+				except Exception as e:
+					if 'duplicate' in e.message:
+						pass
+					else:
+						print e
 
 				# then, if necessary, download the member's page content
 				content = None
@@ -350,11 +395,11 @@ with requests.session() as requests_session:
 				while content == None:
 					try:
 						content = get_content(member['source_doc'], requests_session)
-					except requests.exceptions.ConnectionError, e:
+					except requests.exceptions.ConnectionError as e:
 						print e
 						print '   Connection failed. Retrying...'
 						requests_session = requests.session()
-					except Exception, e:
+					except Exception as e:
 						print e
 
 

@@ -6,7 +6,7 @@ import re
 from urlparse import urlparse, urlunparse
 from time import sleep
 
-def get_content(source_doc_obj, request_session):
+def get_content(source_doc_obj, requests_session):
 	""" Returns content of source_doc_obj.
 		If the content wasn't previously downloaded, it requests the content and downloads it. """
 
@@ -14,9 +14,10 @@ def get_content(source_doc_obj, request_session):
 		with open(source_doc_obj.file_name, 'r') as f:
 			content = f.read()
 	except:
-		print '   No file found. Downloading...'
+		print '   No file found. Downloading from {}'.format(source_doc_obj.url)
 		sleep(3)
-		response = request_session.get(source_doc_obj.url)
+		response = requests_session.get(source_doc_obj.url)
+		response.raise_for_status()
 		content = response.content
 
 		with open(source_doc_obj.file_name, 'w') as f:
@@ -36,8 +37,11 @@ def extract_links(content, parent_url):
 		chamber = 'S'
 		try:
 			found_links = soup.find(id = 'list').find_all('a')
-		except: # might need to be more explicit
+		except AttributeError:
 			found_links = soup.find('body').find_all('a')
+		except Exception:
+			raise
+
 	elif 'house' in parent_url.lower():
 		chamber = 'H'
 		try:
@@ -45,17 +49,19 @@ def extract_links(content, parent_url):
 		except:
 			try:
 				found_links = soup.find(id = 'right').find_all('a')
-			except:
+			except AttributeError:
 				found_links = soup.find('body').find_all('a')
+			except Exception:
+				raise
 
 	for link in found_links:
 		if link['href'] != '/':
 
 			parent_path = ''.join(re.findall('.+\/', urlparse(parent_url).path))
 
-			link_path = urlparse(link['href']).path.replace('./', '/') 
+			link_path = urlparse(link['href']).path.replace('./', '/').strip()
 
-			if parent_path not in link_path:
+			if parent_path.lower() not in link_path.lower():
 				full_path = parent_path + link_path
 			else:
 				full_path = link_path

@@ -1,6 +1,8 @@
 id,name,chamber
 HCR,House Concurrent Resolution,H
 HJR,House Joint Resolution,H
+HRM,House Remonstration,H
+HEC,House Elections Commission,H
 SCR,Senate Concurrent Resolution,S
 SR,Senate Resolution,S
 SRB,Senate ??? Bill?,S
@@ -9,4 +11,5 @@ HB,House Bill,H
 SRM,Senate ??? ??,S
 HR,House Resolution,H
 SJR,Senate Joint Resolution,S
+SREM,???,S
 GRP,Governor Reorganization Plan

@@ -1,5 +1,7 @@
 -- Check to see how many members and vacancies for each chamber in each session
-select session.assembly_id, session.id, session.year, session.name, sen_count, sen_vac_count, rep_count, rep_vac_count
+select session.assembly_id, session.id, session.year, session.name
+                , sen_count, sen_vac_count
+                , rep_count, rep_vac_count
 from session
 left join (
         select assembly_id, count(*) as sen_count
