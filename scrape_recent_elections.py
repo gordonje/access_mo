@@ -52,7 +52,8 @@ with session() as r_sesh:
 
 		# set up a new election
 		election = Election(
-				  election_date = spl_txt[-1].strip()
+				  name = opt.text.strip()
+				, election_date = spl_txt[-1].strip()
 				, opt_value = opt['value']
 				, races = []
 			)
@@ -72,6 +73,8 @@ with session() as r_sesh:
 		# pause between requests
 		sleep(3)
 
+		print '    Requesting results from {}'.format(election.name)
+
 		# make a requeest with the election dropdown value
 		response = r_sesh.post(
 			  url
@@ -86,7 +89,7 @@ with session() as r_sesh:
 			}
 		)
 
-		# parse results
+		# parse response
 		soup = BeautifulSoup(response.content, 'lxml')
 
 		# loop over the rows in the electtable...
@@ -118,6 +121,12 @@ with session() as r_sesh:
 				except Exception as e:
 					print type(e)
 					print e
+
+				# if "unexpired" appears in the text, set this attribute
+				if 'unexpired' in tds[0].text:
+					race.unexpired = True
+				else:
+					race.unexpired = False
 
 			# if the second, third and fourth columns have text...
 			elif len(tds[1].text.strip())>0 and len(tds[2].text.strip())>0 and len(tds[3].text.strip())>0:
@@ -159,9 +168,11 @@ for election in elections:
 		# ignore races with types we don't recognize
 		if race.race_type_id != None:
 			# for now, only focus on the state legislative races
-			if 'State Senator' in race.race_type.name or 'State Representatives' in race.race_type.name:
+			if 'State Senator' in race.race_type.name or 'State Representative' in race.race_type.name:
 
 				race.election = election.id
+
+				print '  {}, District # {}'.format(election.election_date, race.district)
 
 				# save the race
 				try:
@@ -176,29 +187,35 @@ for election in elections:
 				# now loop over the candidates
 				for candidate in race.candidates:
 
+					# set the race attribute
 					candidate.race = race.id
 
-					print candidate.raw_name
-
-					# add suffix to pattern
-					# split match and pattern
-
+					# match the name pattern and parse into a dict
 					name_dict = re.match(name_pattern, candidate.raw_name).groupdict()
 				
+					# set the name fields
 					candidate.first_name = name_dict['first']
 					candidate.middle_name = name_dict['middle']
 					candidate.last_name = name_dict['last']
 					candidate.nickname = name_dict['nickname']
 					candidate.name_suffix = name_dict['suffix']
 
-				try:
-					with db.atomic():
-						candidate.save()
-				except Exception as e:
-					if 'duplicate' in e.message:
-						pass
-					else:
-						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+					for k, v in candidate._data.iteritems():
 
+						print '   {0}: {1}'.format(k, v)
+
+					print '------'
+
+					# now save
+					try:
+						with db.atomic():
+							candidate.save()
+					except Exception as e:
+						if 'duplicate' in e.message:
+							pass
+						else:
+							print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+
+				print '==================='
 print 'fin.'
 

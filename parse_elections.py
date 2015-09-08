@@ -23,9 +23,13 @@ cand_pattern = re.compile("^\s+(\w[\w\.\s,\xad'\(\)]+)\s{2,}([A-Za-z\d]{2,3})\s+
 # name suffix pattern
 suffix_pattern = re.compile(' (Jr\.|Sr\.)')
 
+# nickname pattern
+nickname_pattern = re.compile('(?:\((.+)\))')
+
 # candidate name parsing patterns (see this regex in action here: http://regexr.com/3bmnl)
 first_last_pattern = re.compile("^(?P<first>[\w\xad'\.]+) (?:(?P<middle>[\w\xad'\.]+) )?(?P<last>[\w\xad '\.]+)$")
-last_first_pattern = re.compile("(?P<last>[\w\xad '\.]+)(?:,? (?P<suffix1>Jr\.|Sr\.|[IV]+))?, (?P<first>[\w\.]+)(?: (?P<middle>[\w\.]+))?(?: \((?P<nickname>.+)\))?(?: (?P<suffix2>Jr\.|Sr\.|[IV]+))?")
+last_first_pattern = re.compile("(?P<last>[\w\xad '\.]+), (?P<first>[\w\.]+)(?: (?P<middle>[\w\.]+))?")
+# last_first_pattern = re.compile("(?P<last>[\w\xad '\.]+)(?:,? (?P<suffix1>Jr\.|Sr\.|[IV]+))?, (?: \((?P<nickname1>.+)\))?(?P<first>[\w\.]+)(?: (?P<middle>[\w\.]+))?(?: \((?P<nickname2>.+)\))?(?: (?P<suffix2>Jr\.|Sr\.|[IV]+))?")
 
 elections = []
 
@@ -70,6 +74,10 @@ for i in os.listdir(f_path):
 
 	 					# set this election attribute
 						election.election_date = date_match.group(1)
+
+					elif 'State of Missouri' in line:
+
+						election.name = line.replace('State of Missouri', '').strip()
 
 	 				# see if any of the race types names are in the line
 					elif any(race_type.name in line for race_type in race_types):
@@ -121,10 +129,6 @@ for i in os.listdir(f_path):
 						# after getting the total votes, append the race to the election's list 
 						election.races.append(race)
 
-					# other wise print the line to see what we might be missing
-					else:						
-						print repr(line)
-
 		elections.append(election)
 
 		print '=============='
@@ -142,9 +146,11 @@ for election in elections:
 
 	for race in election.races:
 		# for now, only focus on the state legislative races
-		if 'State Senator' in race.race_type.name or 'State Representatives' in race.race_type.name:
+		if 'State Senator' in race.race_type.name or 'State Representative' in race.race_type.name:
 
 			race.election = election.id
+
+			print '  {}, District # {}'.format(election.election_date, race.district)
 
 			try:
 				with db.atomic():
@@ -163,9 +169,21 @@ for election in elections:
 
 				suffix_match = re.search(suffix_pattern, raw_name)
 
+				# if there's a suffix in the name...
 				if suffix_match != None:
+					# set this attribute...
 					candidate.name_suffix = suffix_match.group(1)
+					# and remove the suffix
 					raw_name = re.sub(suffix_pattern, '', raw_name).replace(',,', ',')
+
+				nickname_match = re.search(nickname_pattern, raw_name)
+
+				# if there's nickname...
+				if nickname_match != None:
+					# set this attribute...
+					candidate.nickname = nickname_match.group(1)
+					# and remove the suffix
+					raw_name = re.sub(nickname_pattern, '', raw_name).replace('  ', ' ')
 
 				# if the candidate's raw name includes a comma, then use the last name, first name pattern
 				if ',' in raw_name:
@@ -174,16 +192,19 @@ for election in elections:
 					candidate.first_name = parse_dict['first']
 					candidate.middle_name = parse_dict['middle']
 					candidate.last_name = parse_dict['last']
-					candidate.nickname = parse_dict['nickname']
 
-				# # otherwise use the first name last name pattern
+				# otherwise use the first name last name pattern
 				else:
 					parse_dict = re.match(first_last_pattern, raw_name).groupdict()
 
 					candidate.first_name =  parse_dict['first']
 					candidate.middle_name =  parse_dict['middle']
 					candidate.last_name =  parse_dict['last']
+				
+				for k, v in candidate._data.iteritems():
+					print '   {0}: {1}'.format(k, repr(v))
 
+				# now save
 				try:
 					with db.atomic():
 						candidate.save()
@@ -192,4 +213,10 @@ for election in elections:
 						pass
 					else:
 						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+
+				print '------'
+
+			print '==================='
+
+print 'fin.'
 

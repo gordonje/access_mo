@@ -287,6 +287,7 @@ class Election_Type(BaseModel):
 
 
 class Election(BaseModel):
+	name = CharField()
 	election_date = DateField()
 	election_type = ForeignKeyField(Election_Type, related_name = 'elections')
 	file_name = CharField(null = True)
@@ -300,6 +301,7 @@ class Race(BaseModel):
 	election = ForeignKeyField(Election, related_name = 'races')
 	race_type = ForeignKeyField(Race_Type, related_name = 'races')
 	district = IntegerField(null = True)
+	party = CharField(null = True)
 	unexpired = BooleanField(null = True)
 	num_precincts = IntegerField(null = True)
 	total_votes = IntegerField()
