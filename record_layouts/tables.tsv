@@ -1,0 +1,25 @@
+table	record_count	description
+assembly	12	Collections of elected state legislators. Changes every two years. House members are elected for one assembly and Senate members are elected for two. Records begin in 1995 and end in 2015. 
+session_type	2	"Either ""Regular"" or ""Extraordinary""."
+session	0	Period of legislative activity. A regular session is held every year.
+chamber	2	"Either ""Senate"" or ""House""."
+source_doc	2	URLs and file names (with paths) to documents from which Access Missouri data was extracted. Records are unique by URL, parent_id and file_name.
+person	0	Full parsed names of (what should be) unique persons who have been legislative candidates or members. These are based on SoS election results. Records are unique by first_name, middle_name, last_name and name_suffix.
+person_duplicate	0	Links duplicate person to their most recent person record. Records are unique by person_id and duplicate_id.
+election_type	3	"Either ""General"", ""Special"" or ""Primary""."
+election	0	Dates of state legislative elections held in Missouri from 1996 to 2014.
+race_type	17	"The office for which candidates are running in a given race. Also includes ""Constitutional Amendment"" and ""Proposition""."
+race	0	Combinations of elections, race types and districts for which candidates are running. Includes the number of precincts voting in each race and the total number of votes cast in each race.
+race_candidate	0	Combinations of persons and the races in which they have run.
+assembly_member	0	Each person elected to each assembly. These records are created from winning candidates in races (i.e., race candidate records with rank = 1). Records are unique on race_id and person_id.
+district_vacancy	0	Districts in given chambers that were vacant at the close of given sessions. Collected from House and Senate clerk member rosters. Records are unique on session_id, chamber_id and district.
+committee	0	
+committee_member	0	
+bill_type	14	Prefixes of bills indicating their type and chamber.
+bill	0	Each bill introduced in the Missouri legislature between 1995 and 2014. Records are unique by session_id, bill_type_id and number.
+bill_summary	0	
+bill_text	0	
+bill_topic	0	
+bill_cosponsor	0	Assembly members signed on in support of a given bill. Records are unique by bill_id and assembly_member_id.
+bill_action	0	Dates and descriptions of legislative actions on bills. If the action includes a vote, the number of legislators voting Aye, No and Present are included. Records are unique by bill_id, action_date and description.
+bill_action_journal_page	0	Where available, the link to the legislative journal pdf file and the page numbers of the file in which the bill action is described.

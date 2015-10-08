@@ -3,39 +3,23 @@
 
 from models import *
 from urlparse import urlparse
-import csv
+from csv import DictReader
 
-db.create_tables([
-				  Assembly
-				, Chamber
-				, Person
-				, Session_Type
-				, Session
-				, Source_Doc
-				# , Legislator
-				, Assembly_Member
-				, District_Vacancy
-				, Bill_Type
-				, Bill
-				, Bill_Cosponsor
-				# , Bill_Amendment
-				, Bill_Action
-				, Bill_Action_Journal_Page
-				, Bill_Summary
-				, Bill_Text
-				, Bill_Topic
-				, Committee
-				, Committee_Member
-				, Election_Type
-				, Election
-				, Race_Type
-				, Race
-				, Race_Candidate
-			], True)
+tables = []
 
+# read in table_names from tables.tsv
+with open('record_layouts/tables.tsv', 'rU', ) as f:
+	reader = DictReader(f, delimiter='\t')
+
+	for row in reader:
+		tables.append(globals()[row['table'].title()])
+
+db.create_tables(tables, True)
+
+# inserting all the look-up records.
 
 with open('look_ups/assemblies.csv', 'rU', ) as f:
-	reader = csv.DictReader(f)
+	reader = DictReader(f)
 
 	for row in reader:
 		
@@ -49,7 +33,7 @@ with open('look_ups/assemblies.csv', 'rU', ) as f:
 				print e
 
 with open('look_ups/chambers.csv', 'rU', ) as f:
-	reader = csv.DictReader(f)
+	reader = DictReader(f)
 
 	for row in reader:
 		
@@ -97,7 +81,7 @@ for url in past_session_urls:
 
 
 with open('look_ups/session_types.csv', 'rU', ) as f:
-	reader = csv.DictReader(f)
+	reader = DictReader(f)
 
 	for row in reader:
 		
@@ -112,7 +96,7 @@ with open('look_ups/session_types.csv', 'rU', ) as f:
 
 
 with open('look_ups/bill_types.csv', 'rU', ) as f:
-	reader = csv.DictReader(f)
+	reader = DictReader(f)
 
 	for row in reader:
 		
@@ -126,7 +110,7 @@ with open('look_ups/bill_types.csv', 'rU', ) as f:
 				print e
 
 with open('look_ups/election_types.csv', 'rU', ) as f:
-	reader = csv.DictReader(f)
+	reader = DictReader(f)
 
 	for row in reader:
 
@@ -140,7 +124,7 @@ with open('look_ups/election_types.csv', 'rU', ) as f:
 				print e
 
 with open('look_ups/race_types.csv', 'rU', ) as f:
-	reader = csv.DictReader(f)
+	reader = DictReader(f)
 
 	for row in reader:
 
