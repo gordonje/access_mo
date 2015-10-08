@@ -8,6 +8,7 @@ column_file_headers = [
 	, 'column_name'
 	, 'data_type'
 	, 'character_maximum_length'
+	, 'is_nullable'
 	, 'ordinal_position'
 	, 'description'
 ]

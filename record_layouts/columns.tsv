@@ -1,158 +1,158 @@
-table_name	column_name	data_type	character_maximum_length	ordinal_position	description
-assembly	id	integer		1	Primary key. Also the general assembly number.
-assembly	name	character varying	255	2	"E.g., ""88th General Assembly"""
-assembly	created_date	timestamp without time zone		3	Date and time the record was inserted into the database.
-assembly	start_year	integer		4	Four digit year of the first day of the first session of the general assembly. This should be the year after the general election in which members of this assembly were elected.
-assembly	end_year	integer		5	Four digit year of the last day the last session of the general assembly.
-assembly_member	id	integer		1	Primary key.
-assembly_member	assembly_id	integer		2	Foreign key referencing an assembly in which the member served.
-assembly_member	person_id	integer		3	Foreign key referencing the distinct person who was the assembly Assembly_Member.
-assembly_member	chamber_id	character varying	1	4	Foreign key referencing the chamber in which the member served.
-assembly_member	party	character varying	255	5	The party which the member caucused with during the assembly.
-assembly_member	district	integer		6	Foreign key referencing the district which the assembly member represented.
-assembly_member	counties	character varying	255	7	The counties which the assembly member represented.
-assembly_member	race_candidate_id	integer		8	Foreign key referencing the race candidate record in which member was elected to the assembly.
-assembly_member	source_doc_id	integer		9	None
-assembly_member	created_date	timestamp without time zone		10	Date and time the record was inserted into the database.
-bill	id	integer		1	Primary key.
-bill	session_id	integer		2	Foreign key referencing the session in which the bill was introduced.
-bill	bill_type_id	character varying	255	3	"Foreign key referencing the type of bill (e.g., ""HB"", ""SJB"")."
-bill	number	integer		4	Bill number describing the order in which it was introduced for the given type and session.
-bill	bill_string	character varying	255	5	Full name of bill, including type and number.
-bill	title	character varying	255	6	Title of the bill.
-bill	description	text		7	Description of the bill.
-bill	lr_number	character varying	255	8	Legislative research number???
-bill	sponsor_id	integer		9	Foreign key referencing the assembly member who introduced the bill.
-bill	sponsor_string	character varying	255	10	Name of the bill sponsor, as it appears on the House or Senate clerk website.
-bill	co_sponsor_string	character varying	255	11	Text describing the names of co-sponsors, as it appears on the House or Senate clerk website.
-bill	co_sponsor_link	character varying	255	12	URL linking to the list of co-sponsors of the bill.
-bill	committee_id	integer		13	Foreign key referencing the committee to which the bill was (most recently?) assigned.
-bill	effective_date	character varying	255	14	Date on which the bill would become effective.
-bill	source_doc_id	integer		15	Foreign key representing the House or Senate clerk details page.
-bill	created_date	timestamp without time zone		16	Date and time the record was inserted into the database.
-bill	combined_with	character varying	255	17	None
-bill	stricken_from_calendar	boolean		18	None
-bill_action	id	integer		1	Primary key.
-bill_action	bill_id	integer		2	Foreign key referencing the bill acted upon.
-bill_action	action_date	date		3	Date of legislative action on the bill.
-bill_action	description	text		4	Full description of the legislative action.
-bill_action	description_link	character varying	255	5	Where avaialbe, URL linking to the journal where the legislative action was described.
-bill_action	aye_count	integer		6	"Where available for voting actions, the number of legislators who voted ""aye"", as it appears in the bill action description."
-bill_action	no_count	integer		7	"Where available for voting actions, the number of legislators who voted ""no"", as it appears in the bill action description."
-bill_action	present_count	integer		8	"Where available for voting actions, the number of legislators who voted ""present"", as it appears in the bill action description."
-bill_action	created_date	timestamp without time zone		9	Date and time the record was inserted into the database.
-bill_action_journal_page	id	integer		1	Primary key.
-bill_action_journal_page	bill_action_id	integer		2	Foreign key referencing the bill action.
-bill_action_journal_page	chamber_id	character varying	1	3	Foreign key referencing the chamber to which the journal belongs.
-bill_action_journal_page	start_page	integer		4	Page on which the description of the bill action starts in the legislative journal.
-bill_action_journal_page	end_page	integer		5	Page on which the description of the bill action ends in the legislative journal.
-bill_action_journal_page	journal_link	character varying	255	6	Where available, URL linking to the journal where the legislative action was described.
-bill_action_journal_page	created_date	timestamp without time zone		7	Date and time the record was inserted into the database.
-bill_cosponsor	id	integer		1	Primary key.
-bill_cosponsor	bill_id	integer		2	Foreign key referencing the bill co-sponsored by the member.
-bill_cosponsor	co_sponsor_id	integer		3	Foreign key referencing the assembly member that co-sponsored the bill.
-bill_cosponsor	created_date	timestamp without time zone		4	Date and time the record was inserted into the database.
-bill_summary	id	integer		1	Primary key.
-bill_summary	bill_id	integer		2	None
-bill_summary	description	character varying	255	3	None
-bill_summary	order	integer		4	None
-bill_summary	summary	text		5	None
-bill_summary	source_doc_id	integer		6	None
-bill_text	id	integer		1	Primary key.
-bill_text	bill_id	integer		2	None
-bill_text	description	character varying	255	3	None
-bill_text	order	integer		4	None
-bill_text	text	text		5	None
-bill_text	source_doc_id	integer		6	None
-bill_topic	id	integer		1	Primary key.
-bill_topic	bill_id	integer		2	None
-bill_topic	topic	character varying	255	3	None
-bill_topic	created_date	timestamp without time zone		4	Date and time the record was inserted into the database.
-bill_type	id	character varying	255	1	"Primary key (e.g., ""HB"", ""SJB"")."
-bill_type	name	character varying	255	2	"Full name of the bill type (e.g., ""House Bill"", ""Senate Joint Resolution"")."
-bill_type	chamber_id	character varying	1	3	Foreign key referencing the chamber in which bills of this type originate.
-bill_type	created_date	timestamp without time zone		4	Date and time the record was inserted into the database.
-chamber	id	character varying	1	1	"Primary key. Either ""H"" or ""S""."
-chamber	name	character varying	255	2	"Either ""House"" or ""Senate""."
-chamber	title	character varying	255	3	"Either ""Rep."" or ""Sen.""."
-chamber	full_title	character varying	255	4	"Either ""Representative"" or ""Senator""."
-chamber	created_date	timestamp without time zone		5	Date and time the record was inserted into the database.
-committee	id	integer		1	Primary key.
-committee	chamber_id	character varying	1	2	None
-committee	name	character varying	255	3	None
-committee	created_date	timestamp without time zone		4	Date and time the record was inserted into the database.
-committee_member	id	integer		1	Primary key.
-committee_member	committee_id	integer		2	None
-committee_member	member_id	integer		3	None
-committee_member	created_date	timestamp without time zone		4	Date and time the record was inserted into the database.
-district_vacancy	id	integer		1	Primary key.
-district_vacancy	session_id	integer		2	Foreign key referencing the session in which the district was vacant.
-district_vacancy	chamber_id	character varying	1	3	Foreign key referencing the chamber in which the district was vacant.
-district_vacancy	district	character varying	255	4	The district that was vacant in chamber and session.
-district_vacancy	created_date	timestamp without time zone		5	Date and time the record was inserted into the database.
-election	id	integer		1	Primary key.
-election	name	character varying	255	2	"Name of the election as it appears in the SoS election results (e.g., ""General Election - November 4, 2014"")."
-election	election_date	date		3	Date that the election was held.
-election	election_type_id	character varying	255	4	Foreign key referencing the type of election (General, Primary or Special).
-election	file_name	character varying	255	5	File path and name of a local copy of the text file of the election results.
-election	assembly_id	integer		6	Foreign key field referencing the assembly to which the legislative race candidates were elected.
-election	created_date	timestamp without time zone		7	Date and time the record was inserted into the database.
-election_type	id	character varying	255	1	"Primary key. Either ""G"", ""S"" or ""P""."
-election_type	name	character varying	255	2	"Either ""General"", ""Special"" or ""Primary""."
-election_type	created_date	timestamp without time zone		3	Date and time the record was inserted into the database.
-person	id	integer		1	Primary key.
-person	first_name	character varying	255	2	Full first name or first initial.
-person	middle_name	character varying	255	3	Full middle name or initial.
-person	last_name	character varying	255	4	Full last name.
-person	nickname	character varying	255	5	"Alternate name found in (...), as in ""Jack (Skip) Johnson""."
-person	name_suffix	character varying	255	6	"E.g., ""Sr"", ""Jr"" or ""III""."
-person	created_date	timestamp without time zone		7	Date and time the record was inserted into the database.
-person_duplicate	id	integer		1	Primary key.
-person_duplicate	person_id	integer		2	Foreign key referencing most recent record of the distinct person.
-person_duplicate	duplicate_id	integer		3	Foreign key referencing older person record mapped to the most recent distinct person record.
-person_duplicate	created_date	timestamp without time zone		4	Date and time the record was inserted into the database.
-race	id	integer		1	Primary key.
-race	election_id	integer		2	Foreign key referencing the election when the race was decided.
-race	race_type_id	integer		3	"Foreign key referencing the type of race (e.g., ""State Senator"")."
-race	district	integer		4	Number representing the legislative district for which candidates are running.
-race	party	character varying	255	5	For Primary races, the political party whose nomination candidates are running.
-race	unexpired	boolean		6	Not term limited???
-race	num_precincts	integer		7	Number precincts in which voters are eligible to vote in the race.
-race	total_votes	integer		8	Number of votes cast in the race.
-race	created_date	timestamp without time zone		9	Date and time the record was inserted into the database.
-race_candidate	id	integer		1	Primary key.
-race_candidate	race_id	integer		2	Foreign key referencing the race in which the candidate ran.
-race_candidate	raw_name	character varying	255	3	Full name of the candidate, as it appeared in the SoS election results.
-race_candidate	person_id	integer		4	Foreign key referencing the distinct person representing the candidate.
-race_candidate	party	character varying	255	5	Political party of the candidate, as it appeared in the SoS results.
-race_candidate	votes	integer		6	Number of votes cast for the given candidate in the given election.
-race_candidate	pct_votes	real		7	Votes cast for the given candidate as a percent of total votes cast in the race.
-race_candidate	race_rank	integer		8	Rank among other candidates in the race based on votes received. Winners are ranked 1.
-race_candidate	created_date	timestamp without time zone		9	Date and time the record was inserted into the database.
-race_type	id	integer		1	Primary key.
-race_type	name	character varying	255	2	"Name of the office for which candidates are running in a given race (e.g., ""State Senator""). Also includes ""Constitutional Amendment"" and ""Proposition""."
-race_type	created_date	timestamp without time zone		3	Date and time the record was inserted into the database.
-session	id	integer		1	Primary key.
-session	assembly_id	integer		2	Foreign key referencing assembly in which session occured.
-session	year	integer		3	Four digit year in which the session occured
-session	session_type_id	character varying	1	4	"Foreign key referencing the type of session (either ""Regular"" or ""Extraordinary"")."
-session	year_type_ord	integer		5	Indicates the order of the session in cases where multiple sessions of the same type occurred in the same year (mostly relevant to Extraordinary sessions).
-session	name	character varying	255	6	Name of the session as labeled on the House or Senate clerk website.
-session	created_date	timestamp without time zone		7	Date and time the record was inserted into the database.
-session_type	id	character varying	1	1	"Primary key. Either ""R"" or ""E""."
-session_type	name	character varying	255	2	"Either ""Regular"" or ""Extraordinary""."
-session_type	created_date	timestamp without time zone		3	Date and time the record was inserted into the database.
-source_doc	id	integer		1	Primary key.
-source_doc	name	character varying	255	2	Text labeling the link to the source doc.
-source_doc	session_id	integer		3	Foreign key referencing the session under which the source doc was found.
-source_doc	chamber_id	character varying	1	4	Foreign key referencing the legislative chamber website from which the source doc was collected.
-source_doc	url	character varying	255	5	Link to the source doc.
-source_doc	scheme	character varying	255	6	Parsed from the url.
-source_doc	netloc	character varying	255	7	Parsed from the url.
-source_doc	path	character varying	255	8	Parsed from the url.
-source_doc	params	character varying	255	9	Parsed from the url.
-source_doc	query	character varying	255	10	Parsed from the url.
-source_doc	fragment	character varying	255	11	Parsed from the url.
-source_doc	file_name	character varying	255	12	File name and path for local copy of the source doc.
-source_doc	parent_id	integer		13	Foreign key referencing the other source doc that includes the link to this source doc
-source_doc	created_date	timestamp without time zone		14	Date and time the record was inserted into the database.
+table_name	column_name	data_type	character_maximum_length	is_nullable	ordinal_position	description
+assembly	id	integer		NO	1	Primary key. Also the general assembly number.
+assembly	name	character varying	255	NO	2	"E.g., ""88th General Assembly"""
+assembly	created_date	timestamp without time zone		NO	3	Date and time the record was inserted into the database.
+assembly	start_year	integer		NO	4	Four digit year of the first day of the first session of the general assembly. This should be the year after the general election in which members of this assembly were elected.
+assembly	end_year	integer		NO	5	Four digit year of the last day the last session of the general assembly.
+assembly_member	id	integer		NO	1	Primary key.
+assembly_member	assembly_id	integer		NO	2	Foreign key referencing an assembly in which the member served.
+assembly_member	person_id	integer		NO	3	Foreign key referencing the distinct person who was the assembly Assembly_Member.
+assembly_member	chamber_id	character varying	1	NO	4	Foreign key referencing the chamber in which the member served.
+assembly_member	party	character varying	255	YES	5	The party which the member caucused with during the assembly.
+assembly_member	district	integer		NO	6	Foreign key referencing the district which the assembly member represented.
+assembly_member	counties	character varying	255	YES	7	The counties which the assembly member represented.
+assembly_member	race_candidate_id	integer		NO	8	Foreign key referencing the race candidate record in which member was elected to the assembly.
+assembly_member	source_doc_id	integer		YES	9	None
+assembly_member	created_date	timestamp without time zone		NO	10	Date and time the record was inserted into the database.
+bill	id	integer		NO	1	Primary key.
+bill	session_id	integer		NO	2	Foreign key referencing the session in which the bill was introduced.
+bill	bill_type_id	character varying	255	NO	3	"Foreign key referencing the type of bill (e.g., ""HB"", ""SJB"")."
+bill	number	integer		NO	4	Bill number describing the order in which it was introduced for the given type and session.
+bill	bill_string	character varying	255	YES	5	Full name of bill, including type and number.
+bill	title	character varying	255	YES	6	Title of the bill.
+bill	description	text		YES	7	Description of the bill.
+bill	lr_number	character varying	255	NO	8	Legislative research number???
+bill	sponsor_id	integer		YES	9	Foreign key referencing the assembly member who introduced the bill.
+bill	sponsor_string	character varying	255	YES	10	Name of the bill sponsor, as it appears on the House or Senate clerk website.
+bill	co_sponsor_string	character varying	255	YES	11	Text describing the names of co-sponsors, as it appears on the House or Senate clerk website.
+bill	co_sponsor_link	character varying	255	YES	12	URL linking to the list of co-sponsors of the bill.
+bill	committee_id	integer		YES	13	Foreign key referencing the committee to which the bill was (most recently?) assigned.
+bill	effective_date	character varying	255	NO	14	Date on which the bill would become effective.
+bill	source_doc_id	integer		YES	15	Foreign key representing the House or Senate clerk details page.
+bill	created_date	timestamp without time zone		NO	16	Date and time the record was inserted into the database.
+bill	combined_with	character varying	255	YES	17	None
+bill	stricken_from_calendar	boolean		NO	18	None
+bill_action	id	integer		NO	1	Primary key.
+bill_action	bill_id	integer		NO	2	Foreign key referencing the bill acted upon.
+bill_action	action_date	date		NO	3	Date of legislative action on the bill.
+bill_action	description	text		NO	4	Full description of the legislative action.
+bill_action	description_link	character varying	255	YES	5	Where avaialbe, URL linking to the journal where the legislative action was described.
+bill_action	aye_count	integer		YES	6	"Where available for voting actions, the number of legislators who voted ""aye"", as it appears in the bill action description."
+bill_action	no_count	integer		YES	7	"Where available for voting actions, the number of legislators who voted ""no"", as it appears in the bill action description."
+bill_action	present_count	integer		YES	8	"Where available for voting actions, the number of legislators who voted ""present"", as it appears in the bill action description."
+bill_action	created_date	timestamp without time zone		NO	9	Date and time the record was inserted into the database.
+bill_action_journal_page	id	integer		NO	1	Primary key.
+bill_action_journal_page	bill_action_id	integer		NO	2	Foreign key referencing the bill action.
+bill_action_journal_page	chamber_id	character varying	1	YES	3	Foreign key referencing the chamber to which the journal belongs.
+bill_action_journal_page	start_page	integer		NO	4	Page on which the description of the bill action starts in the legislative journal.
+bill_action_journal_page	end_page	integer		NO	5	Page on which the description of the bill action ends in the legislative journal.
+bill_action_journal_page	journal_link	character varying	255	YES	6	Where available, URL linking to the journal where the legislative action was described.
+bill_action_journal_page	created_date	timestamp without time zone		NO	7	Date and time the record was inserted into the database.
+bill_cosponsor	id	integer		NO	1	Primary key.
+bill_cosponsor	bill_id	integer		NO	2	Foreign key referencing the bill co-sponsored by the member.
+bill_cosponsor	co_sponsor_id	integer		NO	3	Foreign key referencing the assembly member that co-sponsored the bill.
+bill_cosponsor	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+bill_summary	id	integer		NO	1	Primary key.
+bill_summary	bill_id	integer		NO	2	None
+bill_summary	description	character varying	255	NO	3	None
+bill_summary	order	integer		NO	4	None
+bill_summary	summary	text		NO	5	None
+bill_summary	source_doc_id	integer		NO	6	None
+bill_text	id	integer		NO	1	Primary key.
+bill_text	bill_id	integer		NO	2	None
+bill_text	description	character varying	255	NO	3	None
+bill_text	order	integer		NO	4	None
+bill_text	text	text		NO	5	None
+bill_text	source_doc_id	integer		NO	6	None
+bill_topic	id	integer		NO	1	Primary key.
+bill_topic	bill_id	integer		NO	2	None
+bill_topic	topic	character varying	255	NO	3	None
+bill_topic	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+bill_type	id	character varying	255	NO	1	"Primary key (e.g., ""HB"", ""SJB"")."
+bill_type	name	character varying	255	NO	2	"Full name of the bill type (e.g., ""House Bill"", ""Senate Joint Resolution"")."
+bill_type	chamber_id	character varying	1	YES	3	Foreign key referencing the chamber in which bills of this type originate.
+bill_type	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+chamber	id	character varying	1	NO	1	"Primary key. Either ""H"" or ""S""."
+chamber	name	character varying	255	NO	2	"Either ""House"" or ""Senate""."
+chamber	title	character varying	255	NO	3	"Either ""Rep."" or ""Sen.""."
+chamber	full_title	character varying	255	NO	4	"Either ""Representative"" or ""Senator""."
+chamber	created_date	timestamp without time zone		NO	5	Date and time the record was inserted into the database.
+committee	id	integer		NO	1	Primary key.
+committee	chamber_id	character varying	1	NO	2	None
+committee	name	character varying	255	NO	3	None
+committee	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+committee_member	id	integer		NO	1	Primary key.
+committee_member	committee_id	integer		NO	2	None
+committee_member	member_id	integer		NO	3	None
+committee_member	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+district_vacancy	id	integer		NO	1	Primary key.
+district_vacancy	session_id	integer		NO	2	Foreign key referencing the session in which the district was vacant.
+district_vacancy	chamber_id	character varying	1	NO	3	Foreign key referencing the chamber in which the district was vacant.
+district_vacancy	district	character varying	255	NO	4	The district that was vacant in chamber and session.
+district_vacancy	created_date	timestamp without time zone		NO	5	Date and time the record was inserted into the database.
+election	id	integer		NO	1	Primary key.
+election	name	character varying	255	NO	2	"Name of the election as it appears in the SoS election results (e.g., ""General Election - November 4, 2014"")."
+election	election_date	date		NO	3	Date that the election was held.
+election	election_type_id	character varying	255	NO	4	Foreign key referencing the type of election (General, Primary or Special).
+election	file_name	character varying	255	YES	5	File path and name of a local copy of the text file of the election results.
+election	assembly_id	integer		YES	6	Foreign key field referencing the assembly to which the legislative race candidates were elected.
+election	created_date	timestamp without time zone		NO	7	Date and time the record was inserted into the database.
+election_type	id	character varying	255	NO	1	"Primary key. Either ""G"", ""S"" or ""P""."
+election_type	name	character varying	255	NO	2	"Either ""General"", ""Special"" or ""Primary""."
+election_type	created_date	timestamp without time zone		NO	3	Date and time the record was inserted into the database.
+person	id	integer		NO	1	Primary key.
+person	first_name	character varying	255	NO	2	Full first name or first initial.
+person	middle_name	character varying	255	YES	3	Full middle name or initial.
+person	last_name	character varying	255	NO	4	Full last name.
+person	nickname	character varying	255	YES	5	"Alternate name found in (...), as in ""Jack (Skip) Johnson""."
+person	name_suffix	character varying	255	YES	6	"E.g., ""Sr"", ""Jr"" or ""III""."
+person	created_date	timestamp without time zone		NO	7	Date and time the record was inserted into the database.
+person_duplicate	id	integer		NO	1	Primary key.
+person_duplicate	person_id	integer		NO	2	Foreign key referencing most recent record of the distinct person.
+person_duplicate	duplicate_id	integer		NO	3	Foreign key referencing older person record mapped to the most recent distinct person record.
+person_duplicate	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+race	id	integer		NO	1	Primary key.
+race	election_id	integer		NO	2	Foreign key referencing the election when the race was decided.
+race	race_type_id	integer		NO	3	"Foreign key referencing the type of race (e.g., ""State Senator"")."
+race	district	integer		YES	4	Number representing the legislative district for which candidates are running.
+race	party	character varying	255	YES	5	For Primary races, the political party whose nomination candidates are running.
+race	unexpired	boolean		YES	6	Not term limited???
+race	num_precincts	integer		YES	7	Number precincts in which voters are eligible to vote in the race.
+race	total_votes	integer		NO	8	Number of votes cast in the race.
+race	created_date	timestamp without time zone		NO	9	Date and time the record was inserted into the database.
+race_candidate	id	integer		NO	1	Primary key.
+race_candidate	race_id	integer		NO	2	Foreign key referencing the race in which the candidate ran.
+race_candidate	raw_name	character varying	255	NO	3	Full name of the candidate, as it appeared in the SoS election results.
+race_candidate	person_id	integer		NO	4	Foreign key referencing the distinct person representing the candidate.
+race_candidate	party	character varying	255	NO	5	Political party of the candidate, as it appeared in the SoS results.
+race_candidate	votes	integer		NO	6	Number of votes cast for the given candidate in the given election.
+race_candidate	pct_votes	real		NO	7	Votes cast for the given candidate as a percent of total votes cast in the race.
+race_candidate	race_rank	integer		NO	8	Rank among other candidates in the race based on votes received. Winners are ranked 1.
+race_candidate	created_date	timestamp without time zone		NO	9	Date and time the record was inserted into the database.
+race_type	id	integer		NO	1	Primary key.
+race_type	name	character varying	255	NO	2	"Name of the office for which candidates are running in a given race (e.g., ""State Senator""). Also includes ""Constitutional Amendment"" and ""Proposition""."
+race_type	created_date	timestamp without time zone		NO	3	Date and time the record was inserted into the database.
+session	id	integer		NO	1	Primary key.
+session	assembly_id	integer		NO	2	Foreign key referencing assembly in which session occured.
+session	year	integer		NO	3	Four digit year in which the session occured
+session	session_type_id	character varying	1	NO	4	"Foreign key referencing the type of session (either ""Regular"" or ""Extraordinary"")."
+session	year_type_ord	integer		NO	5	Indicates the order of the session in cases where multiple sessions of the same type occurred in the same year (mostly relevant to Extraordinary sessions).
+session	name	character varying	255	NO	6	Name of the session as labeled on the House or Senate clerk website.
+session	created_date	timestamp without time zone		NO	7	Date and time the record was inserted into the database.
+session_type	id	character varying	1	NO	1	"Primary key. Either ""R"" or ""E""."
+session_type	name	character varying	255	NO	2	"Either ""Regular"" or ""Extraordinary""."
+session_type	created_date	timestamp without time zone		NO	3	Date and time the record was inserted into the database.
+source_doc	id	integer		NO	1	Primary key.
+source_doc	name	character varying	255	NO	2	Text labeling the link to the source doc.
+source_doc	session_id	integer		YES	3	Foreign key referencing the session under which the source doc was found.
+source_doc	chamber_id	character varying	1	NO	4	Foreign key referencing the legislative chamber website from which the source doc was collected.
+source_doc	url	character varying	255	NO	5	Link to the source doc.
+source_doc	scheme	character varying	255	NO	6	Parsed from the url.
+source_doc	netloc	character varying	255	NO	7	Parsed from the url.
+source_doc	path	character varying	255	NO	8	Parsed from the url.
+source_doc	params	character varying	255	YES	9	Parsed from the url.
+source_doc	query	character varying	255	YES	10	Parsed from the url.
+source_doc	fragment	character varying	255	YES	11	Parsed from the url.
+source_doc	file_name	character varying	255	NO	12	File name and path for local copy of the source doc.
+source_doc	parent_id	integer		YES	13	Foreign key referencing the other source doc that includes the link to this source doc
+source_doc	created_date	timestamp without time zone		NO	14	Date and time the record was inserted into the database.
