@@ -161,7 +161,7 @@ class Race_Candidate(BaseModel):
 	party = CharField(help_text = 'Political party of the candidate, as it appeared in the SoS results.')
 	votes = IntegerField(help_text = 'Number of votes cast for the given candidate in the given election.')
 	pct_votes = FloatField(help_text = 'Votes cast for the given candidate as a percent of total votes cast in the race.')
-	race_rank = IntegerField(default = 0, help_text = 'Rank among other candidates in the race based on votes received. Winners are ranked 1.')
+	race_rank = IntegerField(null = True, help_text = 'Rank among other candidates in the race based on votes received. Winners are ranked 1.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
