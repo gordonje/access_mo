@@ -8,7 +8,7 @@ from csv import DictReader
 tables = []
 
 # read in table_names from tables.tsv
-with open('record_layouts/tables.tsv', 'rU', ) as f:
+with open('record_layouts/tables.tsv', 'rU') as f:
 	reader = DictReader(f, delimiter='\t')
 
 	for row in reader:
@@ -18,7 +18,7 @@ db.create_tables(tables, True)
 
 # inserting all the look-up records.
 
-with open('look_ups/assemblies.csv', 'rU', ) as f:
+with open('look_ups/assemblies.csv', 'rU') as f:
 	reader = DictReader(f)
 
 	for row in reader:
@@ -32,7 +32,7 @@ with open('look_ups/assemblies.csv', 'rU', ) as f:
 			else:
 				print e
 
-with open('look_ups/chambers.csv', 'rU', ) as f:
+with open('look_ups/chambers.csv', 'rU') as f:
 	reader = DictReader(f)
 
 	for row in reader:
@@ -80,7 +80,7 @@ for url in past_session_urls:
 			print e
 
 
-with open('look_ups/session_types.csv', 'rU', ) as f:
+with open('look_ups/session_types.csv', 'rU') as f:
 	reader = DictReader(f)
 
 	for row in reader:
@@ -95,7 +95,7 @@ with open('look_ups/session_types.csv', 'rU', ) as f:
 				print e
 
 
-with open('look_ups/bill_types.csv', 'rU', ) as f:
+with open('look_ups/bill_types.csv', 'rU') as f:
 	reader = DictReader(f)
 
 	for row in reader:
@@ -109,7 +109,7 @@ with open('look_ups/bill_types.csv', 'rU', ) as f:
 			else:
 				print e
 
-with open('look_ups/election_types.csv', 'rU', ) as f:
+with open('look_ups/election_types.csv', 'rU') as f:
 	reader = DictReader(f)
 
 	for row in reader:
@@ -123,7 +123,7 @@ with open('look_ups/election_types.csv', 'rU', ) as f:
 			else:
 				print e
 
-with open('look_ups/race_types.csv', 'rU', ) as f:
+with open('look_ups/race_types.csv', 'rU') as f:
 	reader = DictReader(f)
 
 	for row in reader:

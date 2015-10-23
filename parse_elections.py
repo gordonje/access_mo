@@ -2,11 +2,12 @@
 
 import os
 from models import *
+from model_helpers import get_or_create_person_name
 import re
 import io
 import inspect
 
-f_path = 'past_content/SoS/txt_files/'
+f_path = 'past_content/SoS/election_results/txts/'
 
 # select the race_types into a list of matching purposes
 race_types = []
@@ -21,24 +22,23 @@ date_pattern = re.compile("^\s*(\w+,\s\w+\s\d{2},\s\d{4})$")
 cand_pattern = re.compile("^\s+(\w[\w\.\s,\xad'\(\)]+)\s{2,}([A-Za-z\d]{2,3})\s+([\d,]+)\s+([\d\.%]+)\s*$")
 
 # name suffix pattern
-suffix_pattern = re.compile(' (Jr\.|Sr\.)')
+suffix_pattern = re.compile(' (Jr|Sr|SR|[IV]{1,3})(?:,|\.|$)')
 
 # nickname pattern
 nickname_pattern = re.compile('(?:\((.+)\))')
 
 # candidate name parsing patterns (see this regex in action here: http://regexr.com/3bmnl)
-first_last_pattern = re.compile("^(?P<first>[\w\xad'\.]+) (?:(?P<middle>[\w\xad'\.]+) )?(?P<last>[\w\xad '\.]+)$")
-last_first_pattern = re.compile("(?P<last>[\w\xad '\.]+), (?P<first>[\w\.]+)(?: (?P<middle>[\w\.]+))?")
-# last_first_pattern = re.compile("(?P<last>[\w\xad '\.]+)(?:,? (?P<suffix1>Jr\.|Sr\.|[IV]+))?, (?: \((?P<nickname1>.+)\))?(?P<first>[\w\.]+)(?: (?P<middle>[\w\.]+))?(?: \((?P<nickname2>.+)\))?(?: (?P<suffix2>Jr\.|Sr\.|[IV]+))?")
+first_last_pattern = re.compile("^(?P<first_name>[\w\-'\.]+) (?:(?P<middle_name>[\w\-'\.]+) )?(?P<last_name>[\w\- '\.]+)$")
+last_first_pattern = re.compile("(?P<last_name>[\w\- '\.]+), (?P<first_name>[\w\.]+)(?: (?P<middle_name>[\w\.]+))?")
 
 elections = []
 
-# loop over the files in the SoS/txt_files folder...
+# loop over the election results .txt files...
 for i in os.listdir(f_path):
-	# skipping this system file
-	if i != '.DS_Store':
+	# skipping any file without the .txt extension
+	if '.txt' in i:
 
-		# print '   Getting election data from {}'.format(i)
+		print 'Getting data from {}'.format(i)
 
 		# set up an election for each file
 		election = Election(
@@ -46,8 +46,6 @@ for i in os.listdir(f_path):
 			, date = None
 			, races = []
 		)
-
-		print election.file_name
 
 		# determine which type of election it is (based on file name)
 		for elec_type in Election_Type.select():
@@ -74,6 +72,19 @@ for i in os.listdir(f_path):
 
 	 					# set this election attribute
 						election.election_date = date_match.group(1)
+
+						# if it's a general election...
+						if election.election_type.name == 'General':
+							# assume it's for the assembly starting next year
+							election.assembly = Assembly.get(start_year = int(re.search('\d{4}', election.election_date).group()) + 1)
+						# if it's a special election...
+						elif election.election_type.name == 'Special':
+							try: 
+								# first, try getting an assembly that started the same year...
+								election.assembly = Assembly.get(start_year = int(re.search('\d{4}', election.election_date).group()))
+							except Assembly.DoesNotExist: 
+								# then try getting an assembly that ended the same year...
+								election.assembly = Assembly.get(end_year = int(re.search('\d{4}', election.election_date).group()))
 
 					elif 'State of Missouri' in line:
 
@@ -109,7 +120,7 @@ for i in os.listdir(f_path):
 						# append a candidate to the race's list
 						race.candidates.append(
 							Race_Candidate(
-								  raw_name = cand_match.group(1).strip()
+								  raw_name = cand_match.group(1).replace(u'\xad', '-').strip()
 								, party = cand_match.group(2).strip()
 								, votes = cand_match.group(3).strip().replace(',', '')
 								, pct_votes = cand_match.group(4).replace('%', '').strip()
@@ -166,40 +177,44 @@ for election in elections:
 				candidate.race = race.id
 
 				raw_name = candidate.raw_name
+				name_dict = {}
 
 				suffix_match = re.search(suffix_pattern, raw_name)
 
 				# if there's a suffix in the name...
 				if suffix_match != None:
+
 					# set this attribute...
-					candidate.name_suffix = suffix_match.group(1)
+					name_dict['name_suffix'] = suffix_match.group(1)
 					# and remove the suffix
 					raw_name = re.sub(suffix_pattern, '', raw_name).replace(',,', ',')
+				else:
+					name_dict['name_suffix'] = None
 
 				nickname_match = re.search(nickname_pattern, raw_name)
 
 				# if there's nickname...
 				if nickname_match != None:
 					# set this attribute...
-					candidate.nickname = nickname_match.group(1)
-					# and remove the suffix
+					name_dict['nickname'] = nickname_match.group(1)
+					# and remove the nickname
 					raw_name = re.sub(nickname_pattern, '', raw_name).replace('  ', ' ')
+				else:
+					name_dict['nickname'] = None
 
 				# if the candidate's raw name includes a comma, then use the last name, first name pattern
 				if ',' in raw_name:
-					parse_dict = re.match(last_first_pattern, raw_name).groupdict()
-
-					candidate.first_name = parse_dict['first']
-					candidate.middle_name = parse_dict['middle']
-					candidate.last_name = parse_dict['last']
+					name_dict.update(re.match(last_first_pattern, raw_name).groupdict())
 
 				# otherwise use the first name last name pattern
 				else:
-					parse_dict = re.match(first_last_pattern, raw_name).groupdict()
+					name_dict.update(re.match(first_last_pattern, raw_name).groupdict())
 
-					candidate.first_name =  parse_dict['first']
-					candidate.middle_name =  parse_dict['middle']
-					candidate.last_name =  parse_dict['last']
+				# get (or create) the name_record
+				name_rec = get_or_create_person_name(name_dict)
+
+				# set the person attribute
+				candidate.person = name_rec.person
 				
 				for k, v in candidate._data.iteritems():
 					print '   {0}: {1}'.format(k, repr(v))

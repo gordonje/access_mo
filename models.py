@@ -4,7 +4,8 @@
 from datetime import datetime
 from sys import argv
 from getpass import getpass
-from peewee import *
+from playhouse.postgres_ext import *
+
 
 ########## Set up database connection ##########
 
@@ -21,7 +22,7 @@ try:
 except IndexError:
 	db_password = getpass('Enter db user password:')
 
-db = PostgresqlDatabase(db_name, user=db_user, password=db_password)
+db = PostgresqlExtDatabase(db_name, user=db_user, password=db_password, register_hstore = False)
 db.connect()
 
 ################################################
@@ -88,12 +89,25 @@ class Source_Doc(BaseModel):
 		)
 
 
+class Name_Group(BaseModel):
+	group_id = IntegerField(help_text = 'Identifies the group to which the name belongs.')
+	name = CharField(help_text = 'Name, formal or diminutive, within the name group.')
+	name_type = CharField(max_length = 4)
+	sex = CharField(max_length = 1, help_text = 'Sex.')
+
+	class Meta:
+		indexes = (
+			(('group_id', 'name'), True),
+		) 
+
+
 class Person(BaseModel):
 	first_name = CharField(help_text = 'Full first name or first initial.')
 	middle_name = CharField(null = True, help_text = 'Full middle name or initial.')
 	last_name = CharField(help_text = 'Full last name.')
-	nickname = CharField(null = True, help_text = 'Alternate name found in (...), as in "Jack (Skip) Johnson".')
 	name_suffix = CharField(null = True, help_text = 'E.g., "Sr", "Jr" or "III".')
+	nickname = CharField(null = True, help_text = 'Alternate name found in (...), as in "Jack (Skip) Johnson".')
+	name_group = ForeignKeyField(Name_Group, null = True, help_text = 'Foreign key referencing the name group to which the first name or nickname of the person belongs.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
@@ -101,26 +115,19 @@ class Person(BaseModel):
 			(('first_name', 'middle_name', 'last_name', 'name_suffix'), True),
 		)
 
-class Person_Duplicate(BaseModel):
-	person = ForeignKeyField(Person, related_name = 'duplicates', help_text = 'Foreign key referencing most recent record of the distinct person.')
-	duplicate = ForeignKeyField(Person, related_name = 'duplicate_of', help_text = 'Foreign key referencing older person record mapped to the most recent distinct person record.')
+class Person_Name(BaseModel):
+	person = ForeignKeyField(Person, related_name = 'names', help_text = 'Foreign key referencing most likely distinct person to which the name belongs.')
+	first_name = CharField(help_text = 'Full first name or first initial.')
+	middle_name = CharField(default = '', help_text = 'Full middle name or initial.')
+	last_name = CharField(help_text = 'Full last name.')
+	name_suffix = CharField(default = '', help_text = 'E.g., "Sr", "Jr" or "III".')
+	nickname = CharField(default = '', help_text = 'Alternate name found in (...), as in "Jack (Skip) Johnson".')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
 		indexes = (
-			(('person', 'duplicate'), True),
+			(('first_name', 'middle_name', 'last_name', 'name_suffix', 'nickname'), True),
 		)	
-
-# class Legislator(BaseModel):
-# 	person = ForeignKeyField(Person, related_name = 'legislative_offices')
-# 	chamber = ForeignKeyField(Chamber)
-# 	district = IntegerField()
-# 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
-
-# 	class Meta:
-# 		indexes = (
-# 			(('person', 'chamber', 'district'), True),
-# 		)
 
 
 class Election_Type(BaseModel):
@@ -140,6 +147,7 @@ class Election(BaseModel):
 
 class Race_Type(BaseModel):
 	name = CharField(unique = True, help_text = 'Name of the office for which candidates are running in a given race (e.g., "State Senator"). Also includes "Constitutional Amendment" and "Proposition".')
+	chamber = ForeignKeyField(Chamber, null = True, help_text = 'Foreign key referencing the legislative chamber for which winners of this type of race are elected.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 
@@ -161,7 +169,7 @@ class Race_Candidate(BaseModel):
 	party = CharField(help_text = 'Political party of the candidate, as it appeared in the SoS results.')
 	votes = IntegerField(help_text = 'Number of votes cast for the given candidate in the given election.')
 	pct_votes = FloatField(help_text = 'Votes cast for the given candidate as a percent of total votes cast in the race.')
-	race_rank = IntegerField(null = True, help_text = 'Rank among other candidates in the race based on votes received. Winners are ranked 1.')
+	rank = IntegerField(null = True, help_text = 'Rank among other candidates in the race based on votes received. Winners are ranked 1.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
@@ -185,6 +193,20 @@ class Assembly_Member(BaseModel):
 		indexes = (
 			(('assembly', 'person', 'chamber', 'district'), True),
 		)
+
+
+class Member_Session_Profile(BaseModel):
+	assembly_member = ForeignKeyField(Assembly_Member, related_name = 'session_profiles', help_text = 'Foreign key referencing the assembly member.')
+	first_name = CharField()
+	middle_name = CharField(null = True)
+	last_middle = CharField()
+	name_suffix = CharField(null = True)
+	title = CharField(null = True)
+	party = CharField()
+	district = IntegerField()
+	chamber = ForeignKeyField(Chamber, related_name = 'member_profiles')
+	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key representing the House or Senate clerk lawmaker details page.')
+	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 
 class District_Vacancy(BaseModel):
@@ -245,7 +267,7 @@ class Bill(BaseModel):
 	co_sponsor_link = CharField(null = True, help_text = 'URL linking to the list of co-sponsors of the bill.')
 	committee = ForeignKeyField(Committee, null = True, help_text = 'Foreign key referencing the committee to which the bill was (most recently?) assigned.')
 	effective_date = CharField(help_text = 'Date on which the bill would become effective.')
-	source_doc = ForeignKeyField(Source_Doc, null = True, help_text = 'Foreign key representing the House or Senate clerk details page.')
+	source_doc = ForeignKeyField(Source_Doc, null = True, help_text = 'Foreign key representing the House or Senate clerk bill details page.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 	combined_with = CharField(null = True)
 	stricken_from_calendar = BooleanField(default = False)
@@ -263,8 +285,7 @@ class Bill_Summary(BaseModel):
 	description = CharField()
 	order = IntegerField()
 	summary = TextField()
-	source_doc = ForeignKeyField(Source_Doc)	
-
+	source_doc = ForeignKeyField(Source_Doc)
 
 class Bill_Text(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'text_versions')
@@ -340,4 +361,3 @@ class Bill_Topic(BaseModel):
 		indexes = (
 			(('bill', 'topic'), True),
 		)
-

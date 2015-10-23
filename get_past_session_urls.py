@@ -6,10 +6,10 @@ import requests
 from utils import *
 from models import *
 
-def get_or_create_session(assembly, year, session_type, name, year_type_num = None):
+def get_or_create_session(assembly, year, session_type, name, year_type_ord = None):
 	""" Returns a session object from the database.
 		If there isn't already one in the database, creates a new one.
-		The year_type_num arg is really only relevant to extraordinary sessions. """
+		The year_type_ord arg is really only relevant to extraordinary sessions. """
 	if session_type == 'R':
 		try:
 			with db.atomic():
@@ -33,14 +33,14 @@ def get_or_create_session(assembly, year, session_type, name, year_type_num = No
 					, year = year
 					, session_type = session_type
 					, name = name
-					, year_type_num = year_type_num
+					, year_type_ord = year_type_ord
 				)
 		except IntegrityError:
 			sess = Session.get(
 				  assembly = assembly
 				, year = year
 				, session_type = session_type
-				, year_type_num = year_type_num
+				, year_type_ord = year_type_ord
 			)
 
 	return sess
@@ -87,9 +87,9 @@ with requests.session() as requests_session:
 				# sess_data['name'] = '{0} {1}'.format(sess_data['year'], sess_data['name'].replace('- ', ''))
 				# this is a total hack and will only work as long as there are one or two extraordinary sessions
 				if '2nd' in link['name'] or 'Second' in link['name']:
-					sess_data['year_type_num'] = 2
+					sess_data['year_type_ord'] = 2
 				else:
-					sess_data['year_type_num'] = 1
+					sess_data['year_type_ord'] = 1
 			else:
 				sess_data['session_type'] = 'R'
 

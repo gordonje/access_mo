@@ -28,7 +28,7 @@ bill	co_sponsor_string	character varying	255	YES	11	Text describing the names of
 bill	co_sponsor_link	character varying	255	YES	12	URL linking to the list of co-sponsors of the bill.
 bill	committee_id	integer		YES	13	Foreign key referencing the committee to which the bill was (most recently?) assigned.
 bill	effective_date	character varying	255	NO	14	Date on which the bill would become effective.
-bill	source_doc_id	integer		YES	15	Foreign key representing the House or Senate clerk details page.
+bill	source_doc_id	integer		YES	15	Foreign key representing the House or Senate clerk bill details page.
 bill	created_date	timestamp without time zone		NO	16	Date and time the record was inserted into the database.
 bill	combined_with	character varying	255	YES	17	None
 bill	stricken_from_calendar	boolean		NO	18	None
@@ -100,17 +100,39 @@ election	created_date	timestamp without time zone		NO	7	Date and time the record
 election_type	id	character varying	255	NO	1	"Primary key. Either ""G"", ""S"" or ""P""."
 election_type	name	character varying	255	NO	2	"Either ""General"", ""Special"" or ""Primary""."
 election_type	created_date	timestamp without time zone		NO	3	Date and time the record was inserted into the database.
+member_session_profile	id	integer		NO	1	Primary key.
+member_session_profile	assembly_member_id	integer		NO	2	Foreign key referencing the assembly member.
+member_session_profile	first_name	character varying	255	NO	3	None
+member_session_profile	middle_name	character varying	255	YES	4	None
+member_session_profile	last_middle	character varying	255	NO	5	None
+member_session_profile	name_suffix	character varying	255	YES	6	None
+member_session_profile	title	character varying	255	YES	7	None
+member_session_profile	party	character varying	255	NO	8	None
+member_session_profile	district	integer		NO	9	None
+member_session_profile	chamber_id	character varying	1	NO	10	None
+member_session_profile	source_doc_id	integer		NO	11	Foreign key representing the House or Senate clerk lawmaker details page.
+member_session_profile	created_date	timestamp without time zone		NO	12	Date and time the record was inserted into the database.
+name_group	id	integer		NO	1	Primary key.
+name_group	group_id	integer		NO	2	Identifies the group to which the name belongs.
+name_group	name	character varying	255	NO	3	Name, formal or diminutive, within the name group.
+name_group	name_type	character varying	4	NO	4	None
+name_group	sex	character varying	1	NO	5	Sex.
 person	id	integer		NO	1	Primary key.
 person	first_name	character varying	255	NO	2	Full first name or first initial.
 person	middle_name	character varying	255	YES	3	Full middle name or initial.
 person	last_name	character varying	255	NO	4	Full last name.
-person	nickname	character varying	255	YES	5	"Alternate name found in (...), as in ""Jack (Skip) Johnson""."
-person	name_suffix	character varying	255	YES	6	"E.g., ""Sr"", ""Jr"" or ""III""."
-person	created_date	timestamp without time zone		NO	7	Date and time the record was inserted into the database.
-person_duplicate	id	integer		NO	1	Primary key.
-person_duplicate	person_id	integer		NO	2	Foreign key referencing most recent record of the distinct person.
-person_duplicate	duplicate_id	integer		NO	3	Foreign key referencing older person record mapped to the most recent distinct person record.
-person_duplicate	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
+person	name_suffix	character varying	255	YES	5	"E.g., ""Sr"", ""Jr"" or ""III""."
+person	nickname	character varying	255	YES	6	"Alternate name found in (...), as in ""Jack (Skip) Johnson""."
+person	name_group_id	integer		YES	7	Foreign key referencing the name group to which the first name or nickname of the person belongs.
+person	created_date	timestamp without time zone		NO	8	Date and time the record was inserted into the database.
+person_name	id	integer		NO	1	Primary key.
+person_name	person_id	integer		NO	2	Foreign key referencing most likely distinct person to which the name belongs.
+person_name	first_name	character varying	255	NO	3	Full first name or first initial.
+person_name	middle_name	character varying	255	NO	4	Full middle name or initial.
+person_name	last_name	character varying	255	NO	5	Full last name.
+person_name	name_suffix	character varying	255	NO	6	"E.g., ""Sr"", ""Jr"" or ""III""."
+person_name	nickname	character varying	255	NO	7	"Alternate name found in (...), as in ""Jack (Skip) Johnson""."
+person_name	created_date	timestamp without time zone		NO	8	Date and time the record was inserted into the database.
 race	id	integer		NO	1	Primary key.
 race	election_id	integer		NO	2	Foreign key referencing the election when the race was decided.
 race	race_type_id	integer		NO	3	"Foreign key referencing the type of race (e.g., ""State Senator"")."
@@ -127,11 +149,12 @@ race_candidate	person_id	integer		NO	4	Foreign key referencing the distinct pers
 race_candidate	party	character varying	255	NO	5	Political party of the candidate, as it appeared in the SoS results.
 race_candidate	votes	integer		NO	6	Number of votes cast for the given candidate in the given election.
 race_candidate	pct_votes	real		NO	7	Votes cast for the given candidate as a percent of total votes cast in the race.
-race_candidate	race_rank	integer		NO	8	Rank among other candidates in the race based on votes received. Winners are ranked 1.
+race_candidate	rank	integer		YES	8	Rank among other candidates in the race based on votes received. Winners are ranked 1.
 race_candidate	created_date	timestamp without time zone		NO	9	Date and time the record was inserted into the database.
 race_type	id	integer		NO	1	Primary key.
 race_type	name	character varying	255	NO	2	"Name of the office for which candidates are running in a given race (e.g., ""State Senator""). Also includes ""Constitutional Amendment"" and ""Proposition""."
-race_type	created_date	timestamp without time zone		NO	3	Date and time the record was inserted into the database.
+race_type	chamber_id	character varying	1	YES	3	Foreign key referencing the legislative chamber for which winners of this type of race are elected.
+race_type	created_date	timestamp without time zone		NO	4	Date and time the record was inserted into the database.
 session	id	integer		NO	1	Primary key.
 session	assembly_id	integer		NO	2	Foreign key referencing assembly in which session occured.
 session	year	integer		NO	3	Four digit year in which the session occured

@@ -1,4 +1,4 @@
-name
+name,chamber
 U.S. President And Vice President
 U.S. Senator
 U.S. Representative
@@ -8,8 +8,8 @@ Secretary Of State
 Attorney General
 State Treasurer
 State Auditor
-State Senator
-State Representative
+State Senator,S
+State Representative,H
 Court of Appeals
 Missouri Supreme Court
 Circuit Judge

@@ -9,8 +9,10 @@ import re
 from time import sleep
 import inspect
 
-if not os.path.exists('past_content/SoS/'):
-	os.makedirs('past_content/SoS/')
+f_path = 'past_content/SoS/election_results/pdfs/'
+
+if not os.path.exists(f_path):
+	os.makedirs(f_path)
 
 with requests.session() as requests_session:
 
@@ -29,7 +31,7 @@ with requests.session() as requests_session:
 				if 'special' in url.lower() or 'allracesgeneral' in url.lower() or 'primary' in url.lower():
 					if 'county' not in url.lower():
 						print url
-						file_name = 'past_content/SoS/' + re.search('\/.+\/(.+\.pdf)', urlparse(url).path).group(1).replace(' ', '')
+						file_name = f_path + re.search('\/.+\/(.+\.pdf)', urlparse(url).path).group(1).replace(' ', '')
 						
 						sleep(3)
 						response = requests_session.get(url)

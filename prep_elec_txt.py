@@ -3,23 +3,23 @@ import re
 import io
 import os
 
-f_path = 'past_content/SoS/'
+base_path = 'past_content/SoS/election_results/'
 
-if not os.path.exists(f_path + 'txt_files/'):
-	os.makedirs(f_path + 'txt_files/')
+if not os.path.exists(base_path + 'txts/'):
+	os.makedirs(base_path + 'txts/')
 
-for i in os.listdir(f_path):
+for i in os.listdir(base_path + 'pdfs/'):
 
 	if '.txt' in i:
 
 		print '   Prepping {}...'.format(i)
 
-		with io.open(f_path + i, mode = 'r', encoding='UTF-8') as old:
+		with io.open(base_path + 'pdfs/' + i, mode = 'r', encoding='UTF-8') as old:
 
-			with io.open(f_path + 'txt_files/' + i, mode = 'w', encoding='UTF-8') as new:
+			with io.open(base_path + 'txts/' + i, mode = 'w', encoding='UTF-8') as new:
 			
 				new.write(old.read().replace(u'\x0c', '').replace(u'\xa0', ' '))
 
-		os.remove(f_path + i)		
+		os.remove(base_path + 'pdfs/' + i)
 
 print 'fin.'

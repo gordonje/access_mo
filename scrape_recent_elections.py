@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from models import *
+from model_helpers import get_or_create_person_name
 from requests import session
 from bs4 import BeautifulSoup
 from time import sleep
-import os
-import io
 import re
 import inspect
 
@@ -17,7 +16,7 @@ for race_type in Race_Type.select():
 
 url = 'http://enrarchives.sos.mo.gov/enrnet/Default.aspx'
 
-name_pattern = re.compile("^(?P<first>[\w'\.]+) (?:(?P<middle>[\w\.]+) )?(?:\((?P<nickname>.+)\) )?(?P<last>[\w\- '\.]+)(?:, (?P<suffix>Jr\.|Sr\.|[IV]+))?$")
+name_pattern = re.compile("^(?P<first_name>[\w'\.]+) (?:(?P<middle_name>[\w\.]+) )?(?:\((?P<nickname>.+)\) )?(?P<last_name>[\w\-'\.]+)(?:,? (?P<name_suffix>Jr\.|Sr\.|[IV]+))?$")
 
 elections = []
 
@@ -64,6 +63,19 @@ with session() as r_sesh:
 				# then set this attribute
 				election.election_type = elec_type
 
+		# if it's a general election...
+		if election.election_type.name == 'General':
+			# assume it's for the assembly starting next year
+			election.assembly = Assembly.get(start_year = int(re.search('\d{4}', election.election_date).group()) + 1)
+		# if it's a special election...
+		elif election.election_type.name == 'Special':
+			try: 
+				# first, try getting an assembly that started the same year...
+				election.assembly = Assembly.get(start_year = int(re.search('\d{4}', election.election_date).group()))
+			except Assembly.DoesNotExist:
+				# then try getting an assembly that ended the same year...
+				election.assembly = Assembly.get(end_year = int(re.search('\d{4}', election.election_date).group()))
+
 		# append to the global list of elections
 		elections.append(election)
 
@@ -88,6 +100,13 @@ with session() as r_sesh:
 				, '__VIEWSTATE': view_state
 			}
 		)
+
+		# for saving local copies...
+
+		# file_name = election.name.replace('-', '').replace(',', '').replace(' ', '_').replace('__', '_')
+
+		# with open(file_name + '.html', 'w') as save_file:
+		# 	save_file.write(response.content)
 
 		# parse response
 		soup = BeautifulSoup(response.content, 'lxml')
@@ -133,7 +152,7 @@ with session() as r_sesh:
 
 				# append a new candidate to the race's candidate list
 				race.candidates.append(Race_Candidate(
-					  raw_name = tds[0].text.strip()
+					  raw_name = tds[0].text.replace('  ', ' ').strip()
 					, party = tds[1].text.strip()
 					, votes = tds[2].text.strip().replace(',', '')
 					, pct_votes = tds[3].text.replace('%', '').strip()
@@ -193,15 +212,13 @@ for election in elections:
 					# match the name pattern and parse into a dict
 					name_dict = re.match(name_pattern, candidate.raw_name).groupdict()
 				
-					# set the name fields
-					candidate.first_name = name_dict['first']
-					candidate.middle_name = name_dict['middle']
-					candidate.last_name = name_dict['last']
-					candidate.nickname = name_dict['nickname']
-					candidate.name_suffix = name_dict['suffix']
+					# get (or create) the name_record
+					name_rec = get_or_create_person_name(name_dict)
+
+					# set the person attribute
+					candidate.person = name_rec.person
 
 					for k, v in candidate._data.iteritems():
-
 						print '   {0}: {1}'.format(k, v)
 
 					print '------'
