@@ -1,7 +1,7 @@
 table	record_count	description
 assembly	12	Collections of elected state legislators. Changes every two years. House members are elected for one assembly and Senate members are elected for two. Records begin in 1995 and end in 2015. 
 session_type	2	"Either ""Regular"" or ""Extraordinary""."
-session	0	Period of legislative activity. A regular session is held every year.
+session	30	Period of legislative activity. A regular session is held every year.
 chamber	2	"Either ""Senate"" or ""House""."
 source_doc	2	URLs and file names (with paths) to documents from which Access Missouri data was extracted. Records are unique by URL, parent_id and file_name.
 person	2367	Full parsed names of (what should be) unique persons who have been legislative candidates or members. These are based on SoS election results. Records are unique by first_name, middle_name, last_name and name_suffix.
