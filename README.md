@@ -230,7 +230,7 @@ It's also possible that we've erroneously combined some records, which is why we
 
 At the end of the day, we've taken 2,566 records and combined them into 2,367 distinct persons. 
 
-Recall that our general and special election records reference the assembly to which each winning candidate was elected. So we can now use all this information to insert assembly member records, denoting which person represented which chamber and district in which assembly. We also have to insert additional assembly member records for senators, who are elected for four year terms (i.e., two general assemblies). These INSERT commands are in [insert_assembly_members.sql](https://github.com/gordonje/access_mo/blob/master/sql/insert_assembly_members.sql)
+Recall that our general and special election records reference the assembly to which each winning candidate was elected. So we can now use all this information to insert assembly member records, denoting which person represented which chamber and district in which assembly. We also have to insert additional assembly member records for senators, who are elected for four year terms (i.e., two general assemblies). These INSERT commands are in [insert_assembly_members.sql](https://github.com/gordonje/access_mo/blob/master/sql/insert_assembly_members.sql). Note that a few of the Senators elected via special election have to be handled separately on an ad-hoc basis.
 
 Getting Session Data
 --------------------
