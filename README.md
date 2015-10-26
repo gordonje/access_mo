@@ -207,14 +207,14 @@ This second pair is a little suspect, but according to a [Missouri Times Q-and-A
 
 ### Deduping Persons: Wrap Up
 
-Even after all that work, there are potentially still duplicate person records. For example, we haven't handle any case where a person has changed their last name (probably because they were married or divorced). For example, after a research, we learned that these records:
+Even after all that work, there are potentially still duplicate person records that can't be handled programmatically, such as when a person's last name changes completely (probably as a result of marriage or divorce). For example, after a research, we learned that these records:
 
 	first_name | middle_name | last_name      | name_suffix 
 	-----------+-------------+----------------+-------------
 	Linda      |             | Black          |             
 	Linda      | R           | Fishcer        |             
 
-Actually represent [one person](http://house.mo.gov/member.aspx?year=2014&district=117), which has handled with a few ad-hoc commands.
+Actually represent [one person](http://house.mo.gov/member.aspx?year=2014&district=117), which has handled with a few ad-hoc commands. This and other manual dedupes are handled [here](https://github.com/gordonje/access_mo/blob/master/sql/manual_dedupes.sql).
 
 Here's one set of records that might require further research:
 
