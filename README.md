@@ -40,19 +40,19 @@ Results for the elections that occurred from 1995 to through 2014 are only avail
 
 1.	Download the .pdfs:
 
-	$ python get_elections_pdfs.py
+		$ python get_elections_pdfs.py
 
 2.	Extract the text from the .pdfs:
 
-	$ for f in past_content/SoS/election_results/pdfs/*; do pdftotext -enc UTF-8 -layout $f; done
+		$ for f in past_content/SoS/election_results/pdfs/*; do pdftotext -enc UTF-8 -layout $f; done
 
 3.	Remove extraneous unicode characters from the /txt files (specifically \x0c and \xa0) and move them into their own directory:
 
-	$ python prep_elec_txt.py
+		$ python prep_elec_txt.py
 
 4.	Parse the text and save records to the database:
 
-	$ python parse_elections.py [name of your database] [your Postgres user name] [your Postgres password]	
+		$ python parse_elections.py [name of your database] [your Postgres user name] [your Postgres password]	
 
 Both process -- scraping recent elections and parsing past elections -- add the following records to the database:
 
