@@ -2,7 +2,7 @@
 
 import os
 from models import *
-from model_helpers import get_or_create_person_name
+from model_helpers import parse_name, get_or_create_person
 import re
 import io
 import inspect
@@ -20,16 +20,6 @@ date_pattern = re.compile("^\s*(\w+,\s\w+\s\d{2},\s\d{4})$")
 
 # candidate match pattern
 cand_pattern = re.compile("^\s+(\w[\w\.\s,\xad'\(\)]+)\s{2,}([A-Za-z\d]{2,3})\s+([\d,]+)\s+([\d\.%]+)\s*$")
-
-# name suffix pattern
-suffix_pattern = re.compile(' (Jr|Sr|SR|[IV]{1,3})(?:,|\.|$)')
-
-# nickname pattern
-nickname_pattern = re.compile('(?:\((.+)\))')
-
-# candidate name parsing patterns (see this regex in action here: http://regexr.com/3bmnl)
-first_last_pattern = re.compile("^(?P<first_name>[\w\-'\.]+) (?:(?P<middle_name>[\w\-'\.]+) )?(?P<last_name>[\w\- '\.]+)$")
-last_first_pattern = re.compile("(?P<last_name>[\w\- '\.]+), (?P<first_name>[\w\.]+)(?: (?P<middle_name>[\w\.]+))?")
 
 elections = []
 
@@ -177,44 +167,11 @@ for election in elections:
 				candidate.race = race.id
 
 				raw_name = candidate.raw_name
-				name_dict = {}
 
-				suffix_match = re.search(suffix_pattern, raw_name)
-
-				# if there's a suffix in the name...
-				if suffix_match != None:
-
-					# set this attribute...
-					name_dict['name_suffix'] = suffix_match.group(1)
-					# and remove the suffix
-					raw_name = re.sub(suffix_pattern, '', raw_name).replace(',,', ',')
-				else:
-					name_dict['name_suffix'] = None
-
-				nickname_match = re.search(nickname_pattern, raw_name)
-
-				# if there's nickname...
-				if nickname_match != None:
-					# set this attribute...
-					name_dict['nickname'] = nickname_match.group(1)
-					# and remove the nickname
-					raw_name = re.sub(nickname_pattern, '', raw_name).replace('  ', ' ')
-				else:
-					name_dict['nickname'] = None
-
-				# if the candidate's raw name includes a comma, then use the last name, first name pattern
-				if ',' in raw_name:
-					name_dict.update(re.match(last_first_pattern, raw_name).groupdict())
-
-				# otherwise use the first name last name pattern
-				else:
-					name_dict.update(re.match(first_last_pattern, raw_name).groupdict())
-
-				# get (or create) the name_record
-				name_rec = get_or_create_person_name(name_dict)
+				parsed_name = parse_name(candidate.raw_name)['name_dict']
 
 				# set the person attribute
-				candidate.person = name_rec.person
+				candidate.person = get_or_create_person(parsed_name)['person']
 				
 				for k, v in candidate._data.iteritems():
 					print '   {0}: {1}'.format(k, repr(v))

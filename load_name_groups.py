@@ -1,26 +1,50 @@
 from models import *
-from csv import DictReader
+import csv
 
-id = 1
+with open('female_diminutives.csv', 'rU') as f:
+	reader = csv.reader(f)
 
-with open('name_groups.tsv', 'rU') as f:
-	reader = DictReader(f, delimiter='\t')
+	for row in reader:
+		with db.atomic():
+			f_n = Formal_Name.create_or_get(name = row[0])[0]
+
+		for i in row[1:]:
+			with db.atomic():
+				Diminutive_Name.create_or_get(
+					  formal_name = f_n
+					, name = i
+					, sex = 'F'
+				)
+
+with open('male_diminutives.csv', 'rU') as f:
+	reader = csv.reader(f)
 
 	for row in reader:
 
-		try:
-			with db.atomic():
-				Name_Group.create(group_id = id, name = row['formal_name'], name_type = 'FORM', sex = row['sex'])
-		except Exception as e:
-			print e
+		with db.atomic():
+			f_n = Formal_Name.create_or_get(name = row[0])[0]
 
-		dimin_list = row['diminutive_names'].split(',')
-
-		for dimin in dimin_list:
+		for i in row[1:]:
 			try:
 				with db.atomic():
-					Name_Group.create(group_id = id, name = dimin, name_type = 'DIMN', sex = row['sex'])
-			except Exception as e:
-				print e
+					Diminutive_Name.create(
+						  formal_name = f_n
+						, name = i
+						, sex = 'M'
+					)
 
-		id += 1
+			except Exception as e:
+				if 'duplicate' in e.message:
+
+					diminutive = Diminutive_Name.get(
+										  Diminutive_Name.formal_name == f_n
+										, Diminutive_Name.name == i
+									)
+					
+					diminutive.sex = 'N'
+
+					with db.atomic():
+						diminutive.save()
+
+				else:
+					print e

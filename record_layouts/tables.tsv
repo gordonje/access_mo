@@ -24,4 +24,5 @@ bill_topic	0
 bill_cosponsor	0	Assembly members signed on in support of a given bill. Records are unique by bill_id and assembly_member_id.
 bill_action	279346	Dates and descriptions of legislative actions on bills. If the action includes a vote, the number of legislators voting Aye, No and Present are included. Records are unique by bill_id, action_date and description.
 bill_action_journal_page	208018	Where available, the link to the legislative journal pdf file and the page numbers of the file in which the bill action is described.
-name_group	1642	Formal names and their diminutive variants for persons of each sex.
+formal_name	0	Formal Names that have diminutive versions.
+diminutive_name	0	Diminutive versions of formal names.

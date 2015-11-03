@@ -89,31 +89,19 @@ class Source_Doc(BaseModel):
 		)
 
 
-class Name_Group(BaseModel):
-	group_id = IntegerField(help_text = 'Identifies the group to which the name belongs.')
-	name = CharField(help_text = 'Name, formal or diminutive, within the name group.')
-	name_type = CharField(max_length = 4)
-	sex = CharField(max_length = 1, help_text = 'Sex.')
-
-	class Meta:
-		indexes = (
-			(('group_id', 'name'), True),
-		) 
-
-
 class Person(BaseModel):
 	first_name = CharField(help_text = 'Full first name or first initial.')
 	middle_name = CharField(null = True, help_text = 'Full middle name or initial.')
 	last_name = CharField(help_text = 'Full last name.')
 	name_suffix = CharField(null = True, help_text = 'E.g., "Sr", "Jr" or "III".')
 	nickname = CharField(null = True, help_text = 'Alternate name found in (...), as in "Jack (Skip) Johnson".')
-	name_group = ForeignKeyField(Name_Group, null = True, help_text = 'Foreign key referencing the name group to which the first name or nickname of the person belongs.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
 		indexes = (
 			(('first_name', 'middle_name', 'last_name', 'name_suffix'), True),
 		)
+
 
 class Person_Name(BaseModel):
 	person = ForeignKeyField(Person, related_name = 'names', help_text = 'Foreign key referencing most likely distinct person to which the name belongs.')
@@ -128,6 +116,22 @@ class Person_Name(BaseModel):
 		indexes = (
 			(('first_name', 'middle_name', 'last_name', 'name_suffix', 'nickname'), True),
 		)	
+
+
+class Formal_Name(BaseModel):
+	name = CharField(unique = True, help_text = 'Unique formal name that has one or more diminutive versions.')
+	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
+
+
+class Diminutive_Name(BaseModel):
+	formal_name = ForeignKeyField(Formal_Name, related_name = 'diminutives', help_text = 'Foreign key referencing the formal version of the diminutive name.')
+	name = CharField()
+	sex = CharField(max_length = 1, help_text = 'M = Male, F = Female, N = Neutral')
+
+	class Meta:
+		indexes = (
+			(('formal_name', 'name'), True),
+		)
 
 
 class Election_Type(BaseModel):
@@ -185,8 +189,7 @@ class Assembly_Member(BaseModel):
 	party = CharField(null = True, help_text = 'The party which the member caucused with during the assembly.')
 	district = IntegerField(help_text = 'Foreign key referencing the district which the assembly member represented.')
 	counties = CharField(null = True, help_text = 'The counties which the assembly member represented.')
-	race_candidate = ForeignKeyField(Race_Candidate, help_text = "Foreign key referencing the race candidate record in which member was elected to the assembly.")
-	source_doc = ForeignKeyField(Source_Doc, null = True)
+	race_candidate = ForeignKeyField(Race_Candidate, null = True, help_text = "Foreign key referencing the candidacy in the race (if available) in which the member was elected to the assembly.")
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
@@ -196,17 +199,22 @@ class Assembly_Member(BaseModel):
 
 
 class Member_Session_Profile(BaseModel):
-	assembly_member = ForeignKeyField(Assembly_Member, related_name = 'session_profiles', help_text = 'Foreign key referencing the assembly member.')
+	assembly_member = ForeignKeyField(Assembly_Member, related_name = 'session_profiles', help_text = 'Foreign key referencing the assembly member profiled.')
+	session = ForeignKeyField(Session, related_name = 'member_profiles', help_text = 'Foreign key referencing the session in which the member was profiled.')
+	raw_name = CharField()
 	first_name = CharField()
 	middle_name = CharField(null = True)
-	last_middle = CharField()
+	last_name = CharField()
 	name_suffix = CharField(null = True)
 	title = CharField(null = True)
-	party = CharField()
-	district = IntegerField()
-	chamber = ForeignKeyField(Chamber, related_name = 'member_profiles')
+	party = CharField(null = True)
 	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key representing the House or Senate clerk lawmaker details page.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
+
+	class Meta:
+		indexes = (
+			(('assembly_member', 'session'), True),
+		)
 
 
 class District_Vacancy(BaseModel):

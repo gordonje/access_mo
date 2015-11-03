@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from models import *
-from model_helpers import get_or_create_person_name
+from model_helpers import parse_name, get_or_create_person
 from requests import session
 from bs4 import BeautifulSoup
 from time import sleep
@@ -15,8 +15,6 @@ for race_type in Race_Type.select():
 	race_types.append(race_type)
 
 url = 'http://enrarchives.sos.mo.gov/enrnet/Default.aspx'
-
-name_pattern = re.compile("^(?P<first_name>[\w'\.]+) (?:(?P<middle_name>[\w\.]+) )?(?:\((?P<nickname>.+)\) )?(?P<last_name>[\w\-'\.]+)(?:,? (?P<name_suffix>Jr\.|Sr\.|[IV]+))?$")
 
 elections = []
 
@@ -209,14 +207,10 @@ for election in elections:
 					# set the race attribute
 					candidate.race = race.id
 
-					# match the name pattern and parse into a dict
-					name_dict = re.match(name_pattern, candidate.raw_name).groupdict()
-				
-					# get (or create) the name_record
-					name_rec = get_or_create_person_name(name_dict)
+					parsed_name = parse_name(candidate.raw_name)['name_dict']
 
 					# set the person attribute
-					candidate.person = name_rec.person
+					candidate.person = get_or_create_person(parsed_name)['person']
 
 					for k, v in candidate._data.iteritems():
 						print '   {0}: {1}'.format(k, v)
