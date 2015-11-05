@@ -69,7 +69,7 @@ At this point, the primary races are conflated. That is, for each primary electi
 
 Finally, we also rank the candidates in each race according to the votes each received as a percent of the total votes cast in each race. The rank 1 candidates were the winners of each race:
 
-	$ psql -U [your Postgres user name] -d [name of your database] -f sql/.sql 
+	$ psql -U [your Postgres user name] -d [name of your database] -f sql/rank_race_candidates.sql 
 
 Person De-Duping
 ----------------
