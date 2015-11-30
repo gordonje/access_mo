@@ -4,14 +4,12 @@
 import os
 import requests
 from models import *
-from model_helpers import get_or_create_person, normalize_name_fields
+from model_helpers import get_or_create_person, normalize_name_fields, parse_name, get_party
 from utils import *
 import re
 import inspect
 
-name_pattern = re.compile("^(?P<first_name>[\w'\.]+) (?:(?P<middle_name>\w+) )?(?:(?P<mi>(?:\w\. )+))?(?:[\(\"\'](?P<nickname>.+)[\)\"\'] )?(?P<last_name>(?:St\. )?[\w\-'\.]+)(?:,? (?P<name_suffix>Jr\.|Sr\.|[IV]+))?$")
 name_suffixes = ['II', 'III', 'IV', 'Jr.', 'Jr', 'Sr.', 'Sr']
-name_titles = ['M.D.', 'Dr.']
 
 # set up a requests session
 with requests.session() as requests_session:
@@ -50,15 +48,17 @@ with requests.session() as requests_session:
 			# place to hold all the members collected from the given member list page
 			members = []
 
+			soup = BeautifulSoup(content, 'html5lib')
+
 			# here begins a lot of session and year specific logic for parsing the html
 			# first, deal with the house
 			if members_list_page.chamber.id == 'H':
 
 				# some parsers work better for certain years, apparently
-				if session.year > 2001:
-					soup = BeautifulSoup(content, 'lxml')
-				elif session.year <= 2001:
-					soup = BeautifulSoup(content, 'html5lib')
+				# if session.year > 2001:
+				# 	soup = BeautifulSoup(content, 'lxml')
+				# elif session.year <= 2001:
+				# 	soup = BeautifulSoup(content, 'html5lib')
 
 				if session.year > 2010:
 
@@ -71,8 +71,8 @@ with requests.session() as requests_session:
 
 						member = {
 							  'district': tds[2].text.strip()
-							, 'assembly': session.assembly.id
-							, 'chamber': members_list_page.chamber.id
+							, 'assembly': session.assembly
+							, 'chamber': members_list_page.chamber
 							, 'raw_name': '{0} {1}'.format(first_middle, last)
 							, 'name_dict': {}	
 						}
@@ -101,14 +101,16 @@ with requests.session() as requests_session:
 									member['suffix'] = suffix
 									last = last.replace(suffix, '').strip()
 
-							member['last_name'] = last
+							member['name_dict']['last_name'] = last
 
 							first_middle_dict = re.match("^(?P<first_name>[\w'\.]+)(?: (?P<middle_name>[\w\.]+))?$", first_middle).groupdict()
 
 							# merge the parsed values into the member dict
-							member.update(first_middle_dict)
+							member['name_dict'].update(first_middle_dict)
 
-							member['party'] = tds[3].text.strip()
+							member['name_dict'] = normalize_name_fields(member['name_dict'])
+
+							member['party'] = get_party(tds[3].text.strip())
 							member['url'] = 'http://house.mo.gov/member.aspx?year={0}&district={1}'.format(session.year, member['district'])
 
 							members.append(member)
@@ -140,8 +142,8 @@ with requests.session() as requests_session:
 							d_p = tds[1].text.split('-')
 							member = {
 								  'district': d_p[0].strip()
-								, 'assembly': session.assembly.id
-								, 'chamber': members_list_page.chamber.id
+								, 'assembly': session.assembly
+								, 'chamber': members_list_page.chamber
 								, 'raw_name': tds[0].text.strip()
 								, 'name_dict': {}
 							}
@@ -162,26 +164,11 @@ with requests.session() as requests_session:
 										print 'Line #{0}'.format(inspect.currentframe().f_lineno)
 
 							else:
-								# see if there's a title in the name
-								for title in name_titles:
-									if title in member['raw_name']:
-										# if so, store this separately, and remove it from the rest of the name
-										member['title'] = title
-										member['raw_name'] = member['raw_name'].replace(title, '').replace(',', '').strip()
+								# parse the member's raw name, save the results to the name_dict
 
-								# use the regex pattern to parse the name string
-								name_dict = re.match(name_pattern, member['raw_name']).groupdict()
+								member['name_dict'].update(parse_name(member['raw_name'])['name_dict'])
 
-								# if there isn't a middle name, use the middle initials
-								if name_dict['middle_name'] == None:
-									name_dict['middle_name'] == name_dict['mi']
-								
-								del name_dict['mi']
-
-								# merge the parsed values into the member dict
-								member.update(name_dict)
-
-								member['party'] = d_p[1].strip()
+								member['party'] = get_party(d_p[1].strip())
 								
 								if member['party'] == '':
 									member['party'] = None
@@ -197,7 +184,7 @@ with requests.session() as requests_session:
 			# now, deal with the senate
 			if members_list_page.chamber.id == 'S':
 
-				soup = BeautifulSoup(content, 'lxml')
+				# soup = BeautifulSoup(content, 'lxml')
 
 				if session.year > 2004:
 					# for the post-2004 years, there's a table of members with a 0 border and a width of either 60 or 90 %
@@ -213,8 +200,8 @@ with requests.session() as requests_session:
 						else:
 							p_d = tds[1].text.strip().split('-')
 							member = {
-								  'assembly': session.assembly.id
-								, 'chamber': members_list_page.chamber.id
+								  'assembly': session.assembly
+								, 'chamber': members_list_page.chamber
 								, 'raw_name': tds[0].text.strip()
 								, 'name_dict': {}
 							}
@@ -223,7 +210,6 @@ with requests.session() as requests_session:
 								# Some times the vacant district number shows up in the name
 								if len(p_d) == 0:
 									member['district'] = re.search('\d+', member['raw_name']).group()
-									print member['district']
 								else:
 									member['district'] = tds[1].text.strip()
 								try:
@@ -240,26 +226,10 @@ with requests.session() as requests_session:
 										print e
 										print 'Line #{0}'.format(inspect.currentframe().f_lineno)
 							else:
-								# see if there's a title in the name
-								for title in name_titles:
-									if title in member['raw_name']:
-										# if so, store this separately, and remove it from the rest of the name
-										member['title'] = title
-										member['raw_name'] = member['raw_name'].replace(title, '').replace(',', '').strip()
+								# parse the member's raw name, save the results to the name_dict
+								member['name_dict'].update(parse_name(member['raw_name'])['name_dict'])
 
-								# use the regex pattern to parse the name string
-								name_dict = re.match(name_pattern, member['raw_name']).groupdict()
-
-								# if there isn't a middle name, use the middle initials
-								if name_dict['middle_name'] == None:
-									name_dict['middle_name'] == name_dict['mi']
-								
-								del name_dict['mi']
-
-								# merged the parsed values into the member dict
-								member.update(name_dict)
-
-								member['party'] = p_d[0]
+								member['party'] = get_party(p_d[0])
 								member['district'] = p_d[1]
 								member['url'] = tds[0].find('a')['href']
 
@@ -273,8 +243,8 @@ with requests.session() as requests_session:
 
 							p_d = link.find_parent('td').find_next_sibling('td').text.strip().split('-')
 							member = {
-								  'assembly': session.assembly.id
-								, 'chamber': members_list_page.chamber.id
+								  'assembly': session.assembly
+								, 'chamber': members_list_page.chamber
 								, 'raw_name': link.text.strip().replace(',', '')
 								, 'name_dict': {}
 							}
@@ -298,31 +268,14 @@ with requests.session() as requests_session:
 										print e
 										print 'Line #{0}'.format(inspect.currentframe().f_lineno)
 							else:
-								# see if there's a title in the name
-								for title in name_titles:
-									if title in member['raw_name']:
-										# if so, store this separately, and remove it from the rest of the name
-										member['title'] = title
-										member['raw_name'] = member['raw_name'].replace(title, '').replace(',', '').strip()
+								# parse the member's raw name, save the results to the name_dict
+								member['name_dict'].update(parse_name(member['raw_name'])['name_dict'])
 
-								# use the regex pattern to parse the name string
-								name_dict = re.match(name_pattern, member['raw_name']).groupdict()
-
-								# if there isn't a middle name, use the middle initials
-								if name_dict['middle_name'] == None:
-									name_dict['middle_name'] == name_dict['mi']
-								
-								del name_dict['mi']
-
-								# merged the parsed values into the member dict
-								member.update(name_dict)
-
-								member['party'] = p_d[0]
+								member['party'] = get_party(p_d[0])
 								member['district'] = p_d[1]
 								member['url'] = link['href']
 
 								members.append(member)
-
 				else:
 
 					for link in soup.find_all('a'):
@@ -331,8 +284,8 @@ with requests.session() as requests_session:
 
 							member = {
 								  'district': re.search('mem(\d+).htm', link['href']).group(1)
-								, 'assembly': session.assembly.id
-								, 'chamber': members_list_page.chamber.id
+								, 'assembly': session.assembly
+								, 'chamber': members_list_page.chamber
 								, 'raw_name': link.text.replace('Senator', '').replace('\r\n', ' ').strip()
 								, 'name_dict': {}
 							}
@@ -352,29 +305,9 @@ with requests.session() as requests_session:
 										print e
 										print 'Line #{0}'.format(inspect.currentframe().f_lineno)
 							else:
-								# see if there's a title in the name
-								for title in name_titles:
-									if title in member['raw_name']:
-										# if so, store this separately, and remove it from the rest of the name
-										member['title'] = title
-										member['raw_name'] = member['raw_name'].replace(title, '').replace(',', '').strip()
-
-								# use the regex pattern to parse the name string
-								try:
-									name_dict = re.match(name_pattern, member['raw_name']).groupdict()
-								except:
-									print 'NO MATCH!!'
-									print repr(member['raw_name'])
-									print '------------------'
-
-								# if there isn't a middle name, use the middle initials
-								if name_dict['middle_name'] == None:
-									name_dict['middle_name'] == name_dict['mi']
-								
-								del name_dict['mi']
-
-								# merged the parsed values into the member dict
-								member.update(name_dict)								
+								# parse the member's raw name, save the results to the name_dict
+								member['name_dict'].update(parse_name(member['raw_name'])['name_dict'])
+							
 								# party cannot be found on these pages
 								member['party'] = None
 
@@ -389,17 +322,16 @@ with requests.session() as requests_session:
 
 			# now, loop over all the members collected on the page
 			for member in members:
-
 				# get the assembly member's record
 				# set up the default query
 				member_query = (Assembly_Member
 									.select()
 									.join(Person)
 									.where(
-										  (Person.last_name == member['last_name'])
+										  (Person.last_name == member['name_dict']['last_name'])
 										& (Assembly_Member.district == member['district'])
 										& (Assembly_Member.chamber == member['chamber'])
-										& (Assembly_Member.assembly == session.assembly)
+										& (Assembly_Member.assembly == member['assembly'])
 									)
 								)			
 				match_count = member_query.count()
@@ -414,11 +346,11 @@ with requests.session() as requests_session:
 										.select()
 										.join(Person)
 										.where(
-											  (Person.last_name == member['last_name'])
-											& (fn.Substr(Person.first_name, 1, 1) == member['first_name'][0])
+											  (Person.last_name == member['name_dict']['last_name'])
+											& (Person.first_name.startswith(member['name_dict']['first_name'][0]))
 											& (Assembly_Member.district == member['district'])
 											& (Assembly_Member.chamber == member['chamber'])
-											& (Assembly_Member.assembly == session.assembly)
+											& (Assembly_Member.assembly == member['assembly'])
 										)
 									)
 					# now if there's only one...
@@ -429,76 +361,55 @@ with requests.session() as requests_session:
 						print 'UNRECONCILED DUPLICATE!'
 				# if there aren't any matches...
 				elif match_count == 0:
-					# first try concatenating the middle and last names
-					try:
-						a_m = Assembly_Member.select().join(Person
-											).where(
-												  (Person.middle_name.concat(' ').concat(Person.last_name) == member['last_name'])
-												& (Assembly_Member.district == member['district'])
-												& (Assembly_Member.chamber == member['chamber'])
-												& (Assembly_Member.assembly == session.assembly)
-											).get()
-					except Assembly_Member.DoesNotExist:
-						# then, try the opposite
-						try:
-							a_m = Assembly_Member.select().join(Person
-											).where(
-												  (Person.last_name == '{0} {1}'.format(member['middle_name'], member['last_name']))
-												& (Assembly_Member.district == member['district'])
-												& (Assembly_Member.chamber == member['chamber'])
-												& (Assembly_Member.assembly == session.assembly)
-											).get()
-
-						# failing that, use the last names of the alternate person names
-						except Assembly_Member.DoesNotExist:
-							sub_q = (
-								Person_Name
-									.select(Person_Name.person)
-									.where(Person_Name.last_name == member['last_name'])
-								)
-
-							member_query = (
-								Assembly_Member
-										.select()
+					# try alternate names
+					person_names = (Person_Name
+										.select(Person.id)
+										.join(Person)
 										.where(
-											  (Assembly_Member.district == member['district'])
-											& (Assembly_Member.assembly == member['assembly'])
-											& (Assembly_Member.person << sub_q)
+											  (Person_Name.first_name == member['name_dict']['first_name'])
+											& (Person_Name.last_name == member['name_dict']['last_name'])
 										)
 									)
-					# now if there's only one...
+
+					member_query = (Assembly_Member
+										.select()
+										.where(
+											  (Assembly_Member.person << person_names)
+											& (Assembly_Member.district == member['district'])
+											& (Assembly_Member.chamber == member['chamber'])
+											& (Assembly_Member.assembly == member['assembly'])
+										)
+									)
 					if member_query.count() == 1:
-						# then get that one record
 						a_m = member_query.get()
 					else:
-						print '        Creating new assembly {0} member record for {1}'.format(member['assembly'], member['raw_name'])
-						# if we can't find an existing member query, we need to make a new one
-						# first, normalize the name fields
-						clean_name_dict = normalize_name_fields(name_dict)
-						
+						# if we can't find an existing member...
+
 						# then, get or create a person record
-						person_select = get_or_create_person(clean_name_dict)
-						member['person'] = person_select['person']
+						person_select = get_or_create_person(member['name_dict'])
 
 						# if we made a new person, then we need to make a new member record
-						if person_select['new_person']:
+						if person_select['new_person'] == True:
+							print '        Creating new assembly {0} member record for {1}'.format(member['assembly'].id, member['raw_name'])
 							with db.atomic():
-								a_m = Assembly_Member.create(**member)
+								a_m = Assembly_Member.create(person = person_select['person'], **member)
 						else:
-							# try to select a member record for the found person
+							# if it isn't a new person, try to select a member record for the found person
 							try:
 								a_m = (Assembly_Member
 										.select()
 										.where(
 											  (Assembly_Member.district == member['district'])
 											& (Assembly_Member.assembly == member['assembly'])
-											& (Assembly_Member.person == member['person'])
+											& (Assembly_Member.chamber == member['chamber'])
+											& (Assembly_Member.person == person_select['person'])
 										)
 									).get()
 							except Assembly_Member.DoesNotExist:
 								# if we can't find one, make a new member record
+								print '        Creating new assembly {0} member record for {1}'.format(member['assembly'].id, member['raw_name'])
 								with db.atomic():
-									a_m = Assembly_Member.create(**member)
+									a_m = Assembly_Member.create(person = person_select['person'], **member)
 
 				# then, set up the member's session
 				profile = Member_Session_Profile(
@@ -526,8 +437,8 @@ with requests.session() as requests_session:
 											, urlparse(member['url']).query
 											, urlparse(member['url']).fragment
 										))
-									, name = '{0} {1}'.format(member['first_name'], member['last_name'])
-									, file_name = '{0}/{1}_{2}.html'.format(directory, member['last_name'], member['district'])
+									, name = '{0} {1}'.format(member['name_dict']['first_name'], member['name_dict']['last_name'])
+									, file_name = '{0}/{1}_{2}.html'.format(directory, member['name_dict']['last_name'], member['district'])
 									, parent = members_list_page.id
 									, session = session.id
 						)
@@ -535,7 +446,7 @@ with requests.session() as requests_session:
 					if 'duplicate' in e.message:
 						profile.source_doc = Source_Doc.select(
 								).where(
-									  Source_Doc.file_name == '{0}/{1}_{2}.html'.format(directory, member['last_name'], member['district'])
+									  Source_Doc.file_name == '{0}/{1}_{2}.html'.format(directory, member['name_dict']['last_name'], member['district'])
 									, Source_Doc.url == urlunparse((
 											  urlparse(members_list_page.url).scheme
 											, urlparse(members_list_page.url).netloc

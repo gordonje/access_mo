@@ -1,0 +1,13 @@
+id,short_name,name
+D,DEM,Democratic
+R,REP,Republican
+I,IND,Independent
+L,LIB,Libertarian
+C,CST,Constitution
+F,REF,Reform
+N,NAT,Natural Law
+T,UST,U.S. Taxpayers
+G,GRE,Green
+P,PRG,Progressive
+X,NP,No Party
+W,WI,Write-in

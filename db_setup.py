@@ -136,3 +136,17 @@ with open('look_ups/race_types.csv', 'rU') as f:
 				pass
 			else:
 				print e
+
+with open('look_ups/parties.csv', 'rU') as f:
+	reader = DictReader(f)
+
+	for row in reader:
+		
+		try:
+			with db.atomic():
+				Party.create(**row)
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e

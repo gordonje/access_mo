@@ -125,7 +125,7 @@ class Formal_Name(BaseModel):
 
 class Diminutive_Name(BaseModel):
 	formal_name = ForeignKeyField(Formal_Name, related_name = 'diminutives', help_text = 'Foreign key referencing the formal version of the diminutive name.')
-	name = CharField()
+	name = CharField(help_text = 'Diminutive version of the formal name.')
 	sex = CharField(max_length = 1, help_text = 'M = Male, F = Female, N = Neutral')
 
 	class Meta:
@@ -135,7 +135,7 @@ class Diminutive_Name(BaseModel):
 
 
 class Election_Type(BaseModel):
-	id = CharField(primary_key = True, help_text = 'Primary key. Either "G", "S" or "P".')
+	id = CharField(primary_key = True, max_length = 1, help_text = 'Primary key. Either "G", "S" or "P".')
 	name = CharField(unique = True, help_text = 'Either "General", "Special" or "Primary".')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
@@ -146,6 +146,12 @@ class Election(BaseModel):
 	election_type = ForeignKeyField(Election_Type, related_name = 'elections', help_text = 'Foreign key referencing the type of election (General, Primary or Special).')
 	file_name = CharField(null = True, help_text = 'File path and name of a local copy of the text file of the election results.')
 	assembly = ForeignKeyField(Assembly, null = True, related_name = 'elections', help_text = "Foreign key field referencing the assembly to which the legislative race candidates were elected.")
+	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
+
+class Party(BaseModel):
+	id = CharField(primary_key = True, max_length = 1, help_text = 'Primary key.')
+	short_name = CharField(max_length = 3, help_text = 'Three-character abbreviation of the party name.')
+	name = CharField(help_text = 'Current name of the political party.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 
@@ -159,8 +165,8 @@ class Race(BaseModel):
 	election = ForeignKeyField(Election, related_name = 'races', help_text = 'Foreign key referencing the election when the race was decided.')
 	race_type = ForeignKeyField(Race_Type, related_name = 'races', help_text = 'Foreign key referencing the type of race (e.g., "State Senator").')
 	district = IntegerField(null = True, help_text = 'Number representing the legislative district for which candidates are running.')
-	party = CharField(null = True, help_text = 'For Primary races, the political party whose nomination candidates are running.')
-	unexpired = BooleanField(null = True, help_text = 'Not term limited???')
+	party = ForeignKeyField(Party, null = True, help_text = 'For Primary races, foreign key referencing the political party for which the candidates are to be nominee.')
+	unexpired = BooleanField(null = True, help_text = 'Not term-limited???')
 	num_precincts = IntegerField(null = True, help_text = 'Number precincts in which voters are eligible to vote in the race.')
 	total_votes = IntegerField(help_text = 'Number of votes cast in the race.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
@@ -170,7 +176,7 @@ class Race_Candidate(BaseModel):
 	race = ForeignKeyField(Race, related_name = 'candidates', help_text = 'Foreign key referencing the race in which the candidate ran.')
 	raw_name = CharField(help_text = 'Full name of the candidate, as it appeared in the SoS election results.')
 	person = ForeignKeyField(Person, related_name = 'races', help_text = 'Foreign key referencing the distinct person representing the candidate.')
-	party = CharField(help_text = 'Political party of the candidate, as it appeared in the SoS results.')
+	party = ForeignKeyField(Party, help_text = 'Political party of the candidate, as it appeared in the SoS results.')
 	votes = IntegerField(help_text = 'Number of votes cast for the given candidate in the given election.')
 	pct_votes = FloatField(help_text = 'Votes cast for the given candidate as a percent of total votes cast in the race.')
 	rank = IntegerField(null = True, help_text = 'Rank among other candidates in the race based on votes received. Winners are ranked 1.')
@@ -186,7 +192,7 @@ class Assembly_Member(BaseModel):
 	assembly = ForeignKeyField(Assembly, related_name = 'members', help_text = 'Foreign key referencing an assembly in which the member served.')
 	person = ForeignKeyField(Person, related_name = 'assemblies', help_text = 'Foreign key referencing the distinct person who was the assembly Assembly_Member.')
 	chamber = ForeignKeyField(Chamber, help_text = 'Foreign key referencing the chamber in which the member served.')
-	party = CharField(null = True, help_text = 'The party which the member caucused with during the assembly.')
+	party = ForeignKeyField(Party, null = True, help_text = 'The party which the member caucused with during the assembly.')
 	district = IntegerField(help_text = 'Foreign key referencing the district which the assembly member represented.')
 	counties = CharField(null = True, help_text = 'The counties which the assembly member represented.')
 	race_candidate = ForeignKeyField(Race_Candidate, null = True, help_text = "Foreign key referencing the candidacy in the race (if available) in which the member was elected to the assembly.")
@@ -201,13 +207,8 @@ class Assembly_Member(BaseModel):
 class Member_Session_Profile(BaseModel):
 	assembly_member = ForeignKeyField(Assembly_Member, related_name = 'session_profiles', help_text = 'Foreign key referencing the assembly member profiled.')
 	session = ForeignKeyField(Session, related_name = 'member_profiles', help_text = 'Foreign key referencing the session in which the member was profiled.')
-	raw_name = CharField()
-	first_name = CharField()
-	middle_name = CharField(null = True)
-	last_name = CharField()
-	name_suffix = CharField(null = True)
-	title = CharField(null = True)
-	party = CharField(null = True)
+	raw_name = CharField(help_text = 'Name of the legislator as it appears on the Legislator Roster page.')
+	party = ForeignKeyField(Party, null = True)
 	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key representing the House or Senate clerk lawmaker details page.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
@@ -231,8 +232,8 @@ class District_Vacancy(BaseModel):
 
 class Committee(BaseModel):
 	# Is it the same committees with the same names for all sessions?
-	chamber = ForeignKeyField(Chamber, related_name = 'committees')
-	name = CharField()
+	chamber = ForeignKeyField(Chamber, related_name = 'committees', help_text = 'Foreign key referencing the legislative chamber of the committee.')
+	name = CharField(help_text = 'Name of the committee.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
@@ -243,8 +244,8 @@ class Committee(BaseModel):
 
 class Committee_Member(BaseModel):
 	# Are the appointments for each session or each assembly?
-	committee = ForeignKeyField(Committee, related_name = 'members')
-	member = ForeignKeyField(Assembly_Member, related_name = 'committees')
+	committee = ForeignKeyField(Committee, related_name = 'members', help_text = 'Foreign key referencing the committee of which the legislator is a member.')
+	member = ForeignKeyField(Assembly_Member, related_name = 'committees', help_text = 'Foreign key referencing the assembly member that is on the committee.')
 	# is_chair = BooleanField(default = False)
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
@@ -269,13 +270,12 @@ class Bill(BaseModel):
 	title = CharField(null = True, help_text = 'Title of the bill.')
 	description = TextField(null = True, help_text = 'Description of the bill.')
 	lr_number = CharField(help_text = 'Legislative research number???')
-	sponsor = ForeignKeyField(Assembly_Member, null = True, related_name = 'sponsored_bills', help_text = 'Foreign key referencing the assembly member who introduced the bill.')
 	sponsor_string = CharField(null = True, help_text = 'Name of the bill sponsor, as it appears on the House or Senate clerk website.')
 	co_sponsor_string = CharField(null = True, help_text = 'Text describing the names of co-sponsors, as it appears on the House or Senate clerk website.')
 	co_sponsor_link = CharField(null = True, help_text = 'URL linking to the list of co-sponsors of the bill.')
 	committee = ForeignKeyField(Committee, null = True, help_text = 'Foreign key referencing the committee to which the bill was (most recently?) assigned.')
 	effective_date = CharField(help_text = 'Date on which the bill would become effective.')
-	source_doc = ForeignKeyField(Source_Doc, null = True, help_text = 'Foreign key representing the House or Senate clerk bill details page.')
+	source_doc = ForeignKeyField(Source_Doc, null = True, help_text = 'Foreign key referencing the House or Senate clerk bill details page.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 	combined_with = CharField(null = True)
 	stricken_from_calendar = BooleanField(default = False)
@@ -303,31 +303,31 @@ class Bill_Text(BaseModel):
 	source_doc = ForeignKeyField(Source_Doc)
 
 
-class Bill_Cosponsor(BaseModel):
-	bill = ForeignKeyField(Bill, related_name = 'cosponsors', help_text = 'Foreign key referencing the bill co-sponsored by the member.')
-	co_sponsor = ForeignKeyField(Assembly_Member, related_name = 'cosponsored_bills', help_text = 'Foreign key referencing the assembly member that co-sponsored the bill.')
+class Bill_Sponsor(BaseModel):
+	bill = ForeignKeyField(Bill, related_name = 'sponsors', help_text = 'Foreign key referencing the bill sponsored by the member.')
+	sponsor_type = CharField(max_length = 1, help_text = 'S = Sponsor, C = CoSponsor')
+	sponsor = ForeignKeyField(Assembly_Member, related_name = 'sponsored_bills', help_text = 'Foreign key referencing the assembly member that sponsored the bill.')
+	raw_name = CharField(help_text = 'String that contains the name of the bill sponsor as it appears in the source doc.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
 		indexes = (
-			(('bill', 'co_sponsor'), True),
+			(('bill', 'sponsor'), True),
 		)
 
 
 class Bill_Action(BaseModel):
 	bill = ForeignKeyField(Bill, related_name = 'actions', help_text = 'Foreign key referencing the bill acted upon.')
 	action_date = DateField(help_text = 'Date of legislative action on the bill.')
+	order = IntegerField(help_text = 'Order in which the action appeared on the source doc.')
 	description = TextField(help_text = 'Full description of the legislative action.')
-	description_link = CharField(null = True, help_text = 'Where avaialbe, URL linking to the journal where the legislative action was described.')
+	description_link = CharField(null = True, help_text = 'Where available, URL linking to the journal where the legislative action was described.')
 	aye_count = IntegerField(null = True, help_text = 'Where available for voting actions, the number of legislators who voted "aye", as it appears in the bill action description.')
 	no_count = IntegerField(null = True, help_text = 'Where available for voting actions, the number of legislators who voted "no", as it appears in the bill action description.')
 	present_count = IntegerField(null = True, help_text = 'Where available for voting actions, the number of legislators who voted "present", as it appears in the bill action description.')
+	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key referencing the action page of the bill')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
-	class Meta:
-		indexes = (
-			(('bill', 'action_date', 'description'), True),
-		)
 
 class Bill_Action_Journal_Page(BaseModel):
 	bill_action = ForeignKeyField(Bill_Action, related_name = 'journal_pages', help_text = 'Foreign key referencing the bill action.')

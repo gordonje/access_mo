@@ -4,9 +4,11 @@
 import os
 import requests
 from models import *
+from model_helpers import parse_name
 from utils import *
 import inspect
 import codecs
+from datetime import datetime
 
 def parse_journal_pages(tag):
 	""" Accepts a BeautifulSoup tag that should contain journal pages.
@@ -28,29 +30,29 @@ def parse_journal_pages(tag):
 		if re.match('H\s*\d+', jour.strip()):
 			page = Bill_Action_Journal_Page(
 				  chamber = 'H'
-				, first_page = re.search('\d+', page_split.pop(0)).group()
+				, start_page = re.search('\d+', page_split.pop(0)).group()
 			)
 		# or a senate journal page?
 		elif re.match('S\s*\d+', jour.strip()):
 
 			page = Bill_Action_Journal_Page(
 				  chamber = 'S'
-				, first_page = re.search('\d+', page_split.pop(0)).group()
+				, start_page = re.search('\d+', page_split.pop(0)).group()
 			)
 
 		else:
 			# in cases where the 'H' or 'S' prefix is not included, leave the chamber null
 			# could perhaps look at the link's domain to fix this later
 			page = Bill_Action_Journal_Page(
-				first_page = re.search('\d+', page_split.pop(0)).group()
+				start_page = re.search('\d+', page_split.pop(0)).group()
 			)
 
 		try:
 			# this will fail if the journal entry is only on one page
-			page.last_page = re.search('\d+', page_split.pop(-1)).group()
+			page.end_page = re.search('\d+', page_split.pop(-1)).group()
 		except (IndexError, AttributeError) as e:
 			# in which case the first and last journal page are one-in-the-same
-			page.last_page = page.first_page
+			page.end_page = page.start_page
 
 		try:
 			page.journal_link = tag.find('a', text = jour.strip())['href']
@@ -61,6 +63,8 @@ def parse_journal_pages(tag):
 
 	return pages
 
+
+start_time = datetime.now()
 
 # set up a requests session...
 with requests.session() as requests_session:
@@ -134,7 +138,7 @@ with requests.session() as requests_session:
 				# set up a bill object to save later
 				bill = Bill(
 						  session = session.id
-						, chamber = bill_details_page.chamber.id
+						, chamber = bill_details_page.chamber
 						, source_doc = bill_details_page
 						, stricken_from_calendar = False
 					)
@@ -152,12 +156,12 @@ with requests.session() as requests_session:
 					except Exception as e:
 						print e
 
+				soup = BeautifulSoup(content, 'html5lib')
+
 				# painful chamber- and year-specific logic starts here
 				if bill_details_page.chamber.id == 'H':
 
 					if session.year > 2010:
-
-						soup = BeautifulSoup(content, 'lxml')
 							
 						bill_details = soup.find('div', id = 'BillDetails')
 
@@ -167,50 +171,31 @@ with requests.session() as requests_session:
 
 						for tr in bill_details.find('table').findAll('tr'):
 							if tr.find('td') != None:
+								try:
+									header = tr.find('th').text
+								except AttributeError:
+									pass
+								else:
+									if header == 'Sponsor:':
 
-								if tr.find('th').text == 'Sponsor:':
+										bill.sponsor_string = tr.find('td').text.strip()
+											
+									if header == 'LR Number:':
+										bill.lr_number = tr.find('td').text
 
-									bill.sponsor_string = tr.find('td').text.strip()
+									if header in ['Effective Date:', 'Proposed Effective Date:']:
+										bill.effective_date = tr.find('td').text
 
-									if len(bill.sponsor_string) != 0:
+									if header == 'Bill String:':
+										bill.bill_string = tr.find('td').text
 
-										if 'governor' not in bill.sponsor_string.lower():
-											try:
-												parsed_sponsor = re.search('(.+),\s+([\w|\.]+).*\((\d*)\)', bill.sponsor_string)
-											except Exception as e:
-												print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
-												print bill.sponsor_string
-											else:
-												try:
-													bill.sponsor = Assembly_Member.select(
-																	   ).join(Person
-																	   ).where(
-																			  Person.last_name == parsed_sponsor.group(1)
-																			, Person.first_name == parsed_sponsor.group(2)
-																			, Assembly_Member.district == parsed_sponsor.group(3)
-																			, Assembly_Member.chamber == bill_details_page.chamber
-																	   ).get()
-												except Exception as e:
-													print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
-										
-								if tr.find('th').text == 'LR Number:':
-									bill.lr_number = tr.find('td').text
-
-								if 'Effective Date:' in tr.find('th').text:
-									bill.effective_date = tr.find('td').text
-
-								if tr.find('th').text == 'Bill String:':
-									bill.bill_string = tr.find('td').text
-
-								if tr.find('th').text == 'Co-Sponsor:':
-									bill.co_sponsor_string = tr.find('td').text
-									bill.co_sponsor_link = tr.find('a')['href']
+									if header == 'Co-Sponsor:':
+										bill.co_sponsor_string = tr.find('td').text
+										bill.co_sponsor_link = tr.find('a')['href'].strip()
 
 						bill.actions_link = soup.find('div', class_ = 'Sections').find('a')['href']
 				
 					elif session.year <= 2010:
-
-						soup = BeautifulSoup(content, 'html5lib')
 
 						bill_details = soup.find('div', class_ = 'sitebox')
 
@@ -230,28 +215,7 @@ with requests.session() as requests_session:
 						table_1 = bill_details.find_all('table')[1]
 
 						bill.sponsor_string = table_1.find_all('tr')[0].find_all('td')[1].text.strip()
-
-						if len(bill.sponsor_string) != 0:
-
-							if 'governor' not in bill.sponsor_string.lower():
-								try:
-									parsed_sponsor = re.search('(.+),\s+([\w|\.]+).*\((\d*)\)', bill.sponsor_string)
-								except Exception as e:
-									print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
-									print bill.sponsor_string
-								else:
-									try:
-										bill.sponsor = Assembly_Member.select(
-														   ).join(Person
-														   ).where(
-																  Person.last_name == parsed_sponsor.group(1)
-																, Person.first_name == parsed_sponsor.group(2)
-																, Assembly_Member.district == parsed_sponsor.group(3)
-																, Assembly_Member.chamber == bill_details_page.chamber
-														   ).get()
-									except Exception as e:
-										print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
-							
+						
 						try:
 							bill.effective_date = re.search('\d+\/\d+\/\d+', table_1.find_all('tr')[0].find_all('td')[3].text).group()
 						except Exception as e:
@@ -263,7 +227,7 @@ with requests.session() as requests_session:
 						bill.co_sponsor_string = co_sponsor_field.text.replace('\n', '').strip()
 
 						try:
-							bill.co_sponsor_link = co_sponsor_field.find('a')['href']
+							bill.co_sponsor_link = co_sponsor_field.find('a')['href'].strip()
 						except Exception as e:
 							bill.co_sponsor_link = None
 
@@ -274,8 +238,6 @@ with requests.session() as requests_session:
 				if bill_details_page.chamber.id == 'S':					
 
 					if session.year > 2004:
-						
-						soup = BeautifulSoup(content, 'lxml')
 
 						bill.bill_string = soup.find('span', id = 'lblBillNum').text.strip()
 
@@ -296,7 +258,7 @@ with requests.session() as requests_session:
 						bill.actions_link = soup.find('a', id = 'hlAllActions')['href']
 
 						try:
-							bill.co_sponsor_link = soup.find('a', id = 'hlCoSponsors')['href']	
+							bill.co_sponsor_link = soup.find('a', id = 'hlCoSponsors')['href'].strip()
 						except KeyError:
 							bill.co_sponsor_link = None
 						except Exception as e:
@@ -307,8 +269,6 @@ with requests.session() as requests_session:
 
 						if 'Bill Stricken from Calendar' in content:
 							bill.stricken_from_calendar = True
-
-						soup = BeautifulSoup(content, 'html5lib')
 
 						header = soup.find_all('table')[0].find_all('td')
 
@@ -325,12 +285,9 @@ with requests.session() as requests_session:
 						bill.sponsor_string = table2_rows[0].find_all('td')[1].text.strip()
 
 						try:
-							bill.co_sponsor_link = table2_rows[0].find_all('td')[2].find('a')['href']	
-						except IndexError:
+							bill.co_sponsor_link = table2_rows[0].find_all('td')[2].find('a')['href'].strip()
+						except IndexError as e:
 							bill.co_sponsor_link = None
-						except Exception as e:
-							print type(e)
-							print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
 
 						if session.year > 1995:
 							bill.lr_number = table2_rows[1].find_all('td')[1].text.strip()
@@ -358,6 +315,11 @@ with requests.session() as requests_session:
 				for k, v in bill._data.iteritems():
 					print '  {0}: {1}'.format(k, v)
 
+				# the action's links are sometimes pointed to an old domain. this should fix those.
+				if bill_details_page.chamber.id == 'H':
+					if 'www.house.state.mo.us' in bill.actions_link:
+						bill.actions_link = 'http://www.house.mo.gov/content.aspx?info={}'.format(urlparse(bill.actions_link).path)
+
 				# try saving the bill to the db, unless it is a duplicate
 				try:
 					with db.atomic():
@@ -367,11 +329,6 @@ with requests.session() as requests_session:
 						pass
 					else:
 						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
-
-				# the action's links are sometimes pointed to an old domain. this should fix those.
-				if bill_details_page.chamber.id == 'H':
-					if 'www.house.state.mo.us' in bill.actions_link:
-						bill.actions_link = 'http://www.house.mo.gov/content.aspx?info={}'.format(urlparse(bill.actions_link).path)
 
 				# either create or get the source_doc record for the bill's actions page
 				try:
@@ -427,11 +384,13 @@ with requests.session() as requests_session:
 					except Exception as e:
 						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
 
+				soup = BeautifulSoup(content, 'html5lib')
+
 				actions = []
 				
 				if bill_details_page.chamber.id == 'H':
 
-					soup = BeautifulSoup(content, 'html5lib')
+					# soup = BeautifulSoup(content, 'html5lib')
 
 					# some of the files point to broken pages. 
 					# when those come up, try again to get the content.
@@ -462,6 +421,7 @@ with requests.session() as requests_session:
 									  bill = bill.id
 									, action_date = tds[0].text.strip()
 									, description = tds[2].text.strip()
+									, source_doc = actions_doc
 									, journal_pages = []
 								)
 
@@ -476,13 +436,15 @@ with requests.session() as requests_session:
 
 							# if there's no date in the first column, just append the text to the previous action description
 							else:
-								actions[-1].description += ' | {}'.format(tds[2].text.strip())
+								try:
+									actions[-1].description += ' | {}'.format(tds[2].text.strip())
+								except IndexError:
+									# if there's no other action yet, then we just ignore this row
+									pass
 
 				elif bill_details_page.chamber.id == 'S':
 
 					if bill.stricken_from_calendar == False:
-					
-						soup = BeautifulSoup(content, 'lxml')
 						
 						if session.year > 2004:
 							table = soup.find('table', id = 'Table5').find_all('table')[1]
@@ -501,7 +463,7 @@ with requests.session() as requests_session:
 								with open(actions_doc.file_name, 'w') as f:
 									f.write(content)
 
-								soup = BeautifulSoup(content, 'lxml')
+								soup = BeautifulSoup(content, 'html5lib') #was lxml
 								table = soup.find_all('table')[1]
 
 						for tr in table.find_all('tr'):
@@ -519,11 +481,12 @@ with requests.session() as requests_session:
 											, action_date = tds[0].text.strip()
 											, description = tds[1].text.strip()
 											, journal_pages = []
+											, source_doc = actions_doc
 										)
 
 									try:
 										bill_action.description_link = tds[1].find('a')['href']
-									except TypeError:
+									except (TypeError, IndexError):
 										bill_action.description_link = None
 
 									# if there's actually a number in the last column...
@@ -538,63 +501,76 @@ with requests.session() as requests_session:
 
 								# if there's no date in the first column, just append the text to the previous action description
 								else:
-									actions[-1].description += ' | {}'.format(tds[1].text.strip())
+									try:
+										actions[-1].description += ' | {}'.format(tds[1].text.strip())
+									except IndexError:
+										# if there's no other action yet, then we just ignore this row
+										pass
 
+
+				order_count = 0
 				# now go back over the collected actions
 				for action in actions:
 
-					# try searching the description field for a 'yes' vote count pattern
-					try:
-						action.aye_count = re.search('(?:AYES)|(?:YEAS):\s*(\d+)', action.description).group(1)
-					except AttributeError:
-						pass
-					except Exception as e:
-						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+					if action.description != '':
 
-					# try searching the description field for a 'no' vote count pattern
-					try:
-						action.no_count = re.search('(?:NOES)|(?:NAYS):\s*(\d+)', action.description).group(1)
-					except AttributeError:
-						pass
-					except Exception as e:
-						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
-					
-					# try searching the description field for a 'present' vote count pattern
-					try:
-						action.present_count = re.search('PRESENT:\s*(\d+)', action.description).group(1)
-					except AttributeError:
-						pass
-					except Exception as e:
-						print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+						order_count += 1
 
-					for k, v in action._data.iteritems():
-						print '    {0}: {1}'.format(k, v)
+						action.order = order_count
 
-					# then try saving the bill action
-					try:
-						with db.atomic():
-							action.save()
-					except Exception as e:
-						if 'duplicate' in e.message:
+						# try searching the description field for a 'yes' vote count pattern
+						try:
+							action.aye_count = re.search('(?:AYES)|(?:YEAS):\s*(\d+)', action.description).group(1)
+						except AttributeError:
 							pass
-						else:
+						except Exception as e:
 							print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
 
-					# then save each associated journal page
-					for page in action.journal_pages:
+						# try searching the description field for a 'no' vote count pattern
+						try:
+							action.no_count = re.search('(?:NOES)|(?:NAYS):\s*(\d+)', action.description).group(1)
+						except AttributeError:
+							pass
+						except Exception as e:
+							print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+						
+						# try searching the description field for a 'present' vote count pattern
+						try:
+							action.present_count = re.search('PRESENT:\s*(\d+)', action.description).group(1)
+						except AttributeError:
+							pass
+						except Exception as e:
+							print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
 
-						page.bill_action = action.id
+						for k, v in action._data.iteritems():
+							print '    {0}: {1}'.format(k, v)
 
+						# then try saving the bill action
 						try:
 							with db.atomic():
-								page.save()
+								action.save()
 						except Exception as e:
 							if 'duplicate' in e.message:
 								pass
 							else:
 								print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
 
-				print '==========='
+						# then save each associated journal page
+						for page in action.journal_pages:
 
+							page.bill_action = action.id
 
-print 'fin.'
+							try:
+								with db.atomic():
+									page.save()
+							except Exception as e:
+								if 'duplicate' in e.message:
+									pass
+								else:
+									print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
+
+					print '==========='
+
+end_time = datetime.now()
+
+print 'Finished in {}'.format(str(end_time - start_time))

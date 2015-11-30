@@ -4,7 +4,7 @@ INSERT INTO public.race (
             election_id
           , race_type_id
           , district
-          , party
+          , party_id
           , unexpired
           , num_precincts
           , total_votes
@@ -14,7 +14,7 @@ SELECT
           race.election_id
         , race.race_type_id
         , race.district
-        , race_candidate.party
+        , race_candidate.party_id
         , race.unexpired
         , race.num_precincts
         , SUM(votes) as total_votes
@@ -28,7 +28,7 @@ JOIN public.election
 ON race.election_id = election.id
 JOIN public.election_type
 ON election.election_type_id = election_type.id
-WHERE race_type.name in ('State Senator', 'State Representative')
+WHERE race_candidate.party_id NOT IN ('W', 'X')
 AND election_type.name = 'Primary'
 GROUP BY 1, 2, 3, 4, 5, 6, 8;
 
@@ -45,7 +45,7 @@ INSERT INTO public.race_candidate (
           race_id
         , raw_name
         , person_id
-        , party
+        , party_id
         , votes
         , pct_votes
         , old_race_id
@@ -55,7 +55,7 @@ SELECT
           new_race.id as race_id
         , race_candidate.raw_name
         , race_candidate.person_id
-        , race_candidate.party
+        , race_candidate.party_id
         , race_candidate.votes
         , race_candidate.pct_votes
         , race_candidate.old_race_id
@@ -67,7 +67,7 @@ JOIN public.race as new_race
 ON old_race.election_id = new_race.election_id
 AND old_race.district = new_race.district
 AND old_race.race_type_id = new_race.race_type_id
-AND race_candidate.party = new_race.party;
+AND race_candidate.party_id = new_race.party_id;
 
 -- Delete the race candidate records linked to primary races without a party
 DELETE 
@@ -83,7 +83,7 @@ WHERE race_id in (
         ON election.election_type_id = election_type.id
         WHERE race_type.name in ('State Senator', 'State Representative')
         AND election_type.name = 'Primary'
-        AND race.party IS NULL
+        AND race.party_id IS NULL
 );
 
 -- Delete the race records for primary races that don't have a party
@@ -100,7 +100,7 @@ WHERE race.id in (
         ON election.election_type_id = election_type.id
         WHERE race_type.name in ('State Senator', 'State Representative')
         AND election_type.name = 'Primary'
-        AND race.party IS NULL
+        AND race.party_id IS NULL
 );
 
 -- Drop the old_race_id column

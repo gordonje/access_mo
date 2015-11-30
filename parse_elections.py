@@ -2,7 +2,7 @@
 
 import os
 from models import *
-from model_helpers import parse_name, get_or_create_person
+from model_helpers import parse_name, get_or_create_person, get_party
 import re
 import io
 import inspect
@@ -111,7 +111,7 @@ for i in os.listdir(f_path):
 						race.candidates.append(
 							Race_Candidate(
 								  raw_name = cand_match.group(1).replace(u'\xad', '-').strip()
-								, party = cand_match.group(2).strip()
+								, party = get_party(cand_match.group(2).strip())
 								, votes = cand_match.group(3).strip().replace(',', '')
 								, pct_votes = cand_match.group(4).replace('%', '').strip()
 							)
@@ -146,9 +146,16 @@ for election in elections:
 			print 'Error on line #{0}: {1}'.format(inspect.currentframe().f_lineno, e)
 
 	for race in election.races:
-		# for now, only focus on the state legislative races
-		if 'State Senator' in race.race_type.name or 'State Representative' in race.race_type.name:
-
+		# for now, ignore judicial races, propositions and constitutional amendments
+		if race.race_type.name not in [
+			  'Constitutional Amendment'
+			, 'Proposition'
+			, 'Court of Appeals'
+			, 'Missouri Supreme Court'
+			, 'Circuit Judge'
+			, 'Assoc. Circuit Judge'
+			, 'U.S. President And Vice President'
+		]:
 			race.election = election.id
 
 			print '  {}, District # {}'.format(election.election_date, race.district)
@@ -168,7 +175,7 @@ for election in elections:
 
 				raw_name = candidate.raw_name
 
-				parsed_name = parse_name(candidate.raw_name)['name_dict']
+				parsed_name = parse_name(candidate.raw_name.replace(',,', ','))['name_dict']
 
 				# set the person attribute
 				candidate.person = get_or_create_person(parsed_name)['person']

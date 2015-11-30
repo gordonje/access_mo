@@ -4,10 +4,9 @@ INSERT INTO assembly_member (
         , person_id
         , chamber_id
         , district
-        , party
+        , party_id
         , counties
         , race_candidate_id
-        , source_doc_id
         , created_date
 )
 SELECT 
@@ -18,10 +17,9 @@ SELECT
                 WHEN race_type.name = 'State Representative' THEN 'H'
           END as chamber_id
         , race.district
-        , NULL as party
+        , NULL as party_id
         , NULL as counties
         , race_candidate.id
-        , NULL as source_doc
         , now() as created_date
 FROM race_candidate
 JOIN race
@@ -33,6 +31,8 @@ ON election_id = election.id
 WHERE rank = 1
 -- this excludes primary races
 AND election.assembly_id IS NOT NULL
+-- and narrows to state legislative races
+AND race_type.name IN ('State Senator', 'State Representative')
 ORDER BY assembly_id, district;
 
 -- since senators serve four years, insert records for their second assembly
@@ -41,10 +41,9 @@ INSERT INTO assembly_member (
         , person_id
         , chamber_id
         , district
-        , party
+        , party_id
         , counties
         , race_candidate_id
-        , source_doc_id
         , created_date
 )
 SELECT 
@@ -52,10 +51,9 @@ SELECT
         , assembly_member.person_id
         , assembly_member.chamber_id
         , assembly_member.district
-        , NULL as party
+        , NULL as party_id
         , NULL as counties
         , assembly_member.race_candidate_id
-        , NULL as source_doc
         , now() as created_date
 FROM assembly_member
 JOIN race_candidate
@@ -77,10 +75,9 @@ INSERT INTO assembly_member (
         , person_id
         , chamber_id
         , district
-        , party
+        , party_id
         , counties
         , race_candidate_id
-        , source_doc_id
         , created_date
 )
 SELECT
@@ -88,10 +85,9 @@ SELECT
         , assembly_member.person_id
         , 'S' as chamber_id
         , 29 as district
-        , NULL as party
+        , NULL as party_id
         , NULL as counties
         , assembly_member.race_candidate_id
-        , NULL as source_doc
         , now() as created_date
 FROM assembly_member
 JOIN race_candidate
@@ -111,10 +107,9 @@ INSERT INTO assembly_member (
         , person_id
         , chamber_id
         , district
-        , party
+        , party_id
         , counties
         , race_candidate_id
-        , source_doc_id
         , created_date
 )
 SELECT
@@ -122,10 +117,9 @@ SELECT
         , assembly_member.person_id
         , 'S' as chamber_id
         , 5 as district
-        , NULL as party
+        , NULL as party_id
         , NULL as counties
         , assembly_member.race_candidate_id
-        , NULL as source_doc
         , now() as created_date
 FROM assembly_member
 JOIN race_candidate
@@ -145,10 +139,9 @@ INSERT INTO assembly_member (
         , person_id
         , chamber_id
         , district
-        , party
+        , party_id
         , counties
         , race_candidate_id
-        , source_doc_id
         , created_date
 )
 SELECT
@@ -159,7 +152,6 @@ SELECT
         , NULL as party
         , NULL as counties
         , assembly_member.race_candidate_id
-        , NULL as source_doc
         , now() as created_date
 FROM assembly_member
 JOIN race_candidate
@@ -179,10 +171,9 @@ INSERT INTO assembly_member (
         , person_id
         , chamber_id
         , district
-        , party
+        , party_id
         , counties
         , race_candidate_id
-        , source_doc_id
         , created_date
 )
 SELECT
@@ -193,7 +184,6 @@ SELECT
         , NULL as party
         , NULL as counties
         , race_candidate_id
-        , NULL as source_doc
         , now() as created_date
 FROM assembly_member
 JOIN race_candidate

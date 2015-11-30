@@ -8,7 +8,8 @@ from time import sleep
 
 def get_content(source_doc_obj, requests_session):
 	""" Returns content of source_doc_obj.
-		If the content wasn't previously downloaded, it requests the content and downloads it. """
+		If the content wasn't previously downloaded, it requests the content and downloads it.
+	"""
 
 	try:
 		with open(source_doc_obj.file_name, 'r') as f:
@@ -31,7 +32,7 @@ def extract_links(content, parent_url):
 
 	out_links = []
 
-	soup = BeautifulSoup(content, 'lxml')
+	soup = BeautifulSoup(content, 'html5lib')
 
 	if 'senate' in parent_url.lower():
 		chamber = 'S'
@@ -81,7 +82,7 @@ def extract_links(content, parent_url):
 									, urlparse(link['href']).query
 									, urlparse(link['href']).fragment
 								))
-							, 'name': link.text
+							, 'name': link.text.strip()
 							, 'chamber': chamber
 						})
 
