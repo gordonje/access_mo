@@ -308,6 +308,7 @@ class Bill_Sponsor(BaseModel):
 	sponsor_type = CharField(max_length = 1, help_text = 'S = Sponsor, C = CoSponsor')
 	sponsor = ForeignKeyField(Assembly_Member, related_name = 'sponsored_bills', help_text = 'Foreign key referencing the assembly member that sponsored the bill.')
 	raw_name = CharField(help_text = 'String that contains the name of the bill sponsor as it appears in the source doc.')
+	# datetime_sponsored = DateTimeField(null = True, help_text = 'Currently seems to only be available for HB co-sponsors.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:

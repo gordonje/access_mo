@@ -25,11 +25,11 @@ with requests.session() as requests_session:
 						, session.name
 				)
 			
-			# create a members folder in each session folder, if necessary
-			directory = 'past_content/{0}/{1}/members'.format(
-						  members_list_page.chamber.id
-						, members_list_page.parent.name.replace(' ', '_')
-				) 
+			directory = members_list_page.file_name.split('/')
+			del directory[-1]
+			directory.append('members')
+
+			directory = '/'.join(directory)
 			
 			if not os.path.exists(directory):
 				os.makedirs(directory)
@@ -53,12 +53,6 @@ with requests.session() as requests_session:
 			# here begins a lot of session and year specific logic for parsing the html
 			# first, deal with the house
 			if members_list_page.chamber.id == 'H':
-
-				# some parsers work better for certain years, apparently
-				# if session.year > 2001:
-				# 	soup = BeautifulSoup(content, 'lxml')
-				# elif session.year <= 2001:
-				# 	soup = BeautifulSoup(content, 'html5lib')
 
 				if session.year > 2010:
 
@@ -184,11 +178,9 @@ with requests.session() as requests_session:
 			# now, deal with the senate
 			if members_list_page.chamber.id == 'S':
 
-				# soup = BeautifulSoup(content, 'lxml')
-
 				if session.year > 2004:
 					# for the post-2004 years, there's a table of members with a 0 border and a width of either 60 or 90 %
-					for tr in soup.find('table', attrs = {'border': 0, 'width': re.compile('[6,9]0%')}).find_all('tr'):
+					for tr in soup.find('table', attrs = {'border': 0, 'width': re.compile('[6,9]0%')}).find('tbody').find_all('tr'):
 						tds = tr.find_all('td')
 
 						# ignore table rows without more than 1 field:

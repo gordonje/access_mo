@@ -69,7 +69,7 @@ start_time = datetime.now()
 # set up a requests session...
 with requests.session() as requests_session:
 	# for each legislative session...
-	for session in Session.select().order_by(Session.year):
+	for session in Session.select().order_by(Session.year.desc()):
 		# for each bill list page of the session...
 		for bills_list_page in session.source_docs.where(
 								( (Source_Doc.chamber == 'H') & (
@@ -84,12 +84,13 @@ with requests.session() as requests_session:
 							  bills_list_page.chamber.id
 							, session.name
 					)
-			# create a bill/ directory in each session directory, if necessary
-			directory = 'past_content/{0}/{1}/bills'.format(
-						  bills_list_page.chamber.id
-						, bills_list_page.parent.name.replace(' ', '_')
-				) 
 
+			directory = bills_list_page.file_name.split('/')
+			del directory[-1]
+			directory.append('bills')
+
+			directory = '/'.join(directory)
+			
 			if not os.path.exists(directory):
 				os.makedirs(directory)
 
@@ -193,7 +194,11 @@ with requests.session() as requests_session:
 										bill.co_sponsor_string = tr.find('td').text
 										bill.co_sponsor_link = tr.find('a')['href'].strip()
 
-						bill.actions_link = soup.find('div', class_ = 'Sections').find('a')['href']
+						for a_tag in soup.find('div', class_ = 'Sections').find_all('a'):
+							if a_tag.text == 'Actions':
+								bill.actions_link = a_tag['href']
+							elif a_tag.text == 'Co-Sponsors':
+								bill.co_sponsor_link = a_tag['href']
 				
 					elif session.year <= 2010:
 
@@ -389,8 +394,6 @@ with requests.session() as requests_session:
 				actions = []
 				
 				if bill_details_page.chamber.id == 'H':
-
-					# soup = BeautifulSoup(content, 'html5lib')
 
 					# some of the files point to broken pages. 
 					# when those come up, try again to get the content.

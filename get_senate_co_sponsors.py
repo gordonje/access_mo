@@ -7,7 +7,7 @@ from time import sleep
 import re
 
 # set up the co_sponsors directory in each senate session directory
-for session in Session.select():
+for session in Session.select().order_by(year.desc()):
 	file_path = 'past_content/S/' +  session.name.replace(' ', '_') + '/co_sponsors/'
 
 	if not os.path.exists(file_path):

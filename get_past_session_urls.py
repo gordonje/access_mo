@@ -5,6 +5,7 @@ import os
 import requests
 from utils import *
 from models import *
+from model_helpers import get_or_create_source_doc
 
 def get_or_create_session(assembly, year, session_type, name, year_type_ord = None):
 	""" Returns a session object from the database.
@@ -68,7 +69,7 @@ with requests.session() as requests_session:
 		# for each link extracted from the page...
 		for link in extract_links(response.content, chamber.url):
 			
-		# first, set up the legislative session
+			# first, set up the legislative session
 			sess_data = {
 				  'year': int(re.search("\d{4}", link['name']).group())
 				, 'name': link['name'].replace('- ', '').strip()
@@ -96,7 +97,7 @@ with requests.session() as requests_session:
 			# create the legislative session, or get the id of an exising one
 			link['session'] = get_or_create_session(**sess_data).id
 
-		# then, set up the source doc 
+			# then, set up the source doc 
 			link['parent'] = chamber.id
 			link['name'] = sess_data['name']
 			link['file_name'] = 'past_content/{0}/{1}.html'.format(
@@ -140,7 +141,7 @@ with requests.session() as requests_session:
 
 				name = re.sub('\s{2,}', ' ', link['name']).strip()
 
-		# 		ignore links without any text (e.g., images to return to homepage)
+				# ignore links without any text (e.g., images to return to homepage)
 				if len(name) > 0:
 
 					link['name'] = name
@@ -154,5 +155,68 @@ with requests.session() as requests_session:
 
 					Source_Doc.create_or_get(**link)
 
+	print '   Getting current session data...'
+
+	current_assembly = Assembly.select().order_by(Assembly.id.desc()).get()
+
+	response = requests_session.get('http://house.mo.gov/member.aspx')
+
+	soup = BeautifulSoup(response.content, 'html5lib')
+
+	current_session_label = soup.find(id='ContentPlaceHolder1_lblAssemblySession').text.split(' - ')
+
+	current_session_year = current_session_label[1].strip()
+
+	current_session_name = '{0} {1}'.format(current_session_year, current_session_label[0].replace(',', '').strip())
+
+	h_dir = 'past_content/H/{}'.format(current_session_name.replace(' ', '_'))
+
+	s_dir = 'past_content/S/{}'.format(current_session_name.replace(' ', '_'))
+
+	if not os.path.exists(h_dir):
+		os.makedirs(h_dir)
+
+	if not os.path.exists(s_dir):
+		os.makedirs(s_dir)
+
+	current_session = get_or_create_session(
+			  current_assembly
+			, current_session_year
+			, 'R'
+			, current_session_name
+		)
+
+	current_session_links = [
+		  'http://house.mo.gov/member.aspx' 
+		, 'http://house.mo.gov/billlist.aspx'
+		, 'http://www.senate.mo.gov/16info/SenateRoster.htm'
+		, 'http://www.senate.mo.gov/16info/BTS_Web/BillList.aspx?SessionType=R'
+	]
+
+	for link in current_session_links:
+
+		doc_data = {
+			  'parent': None
+			, 'url': link
+			, 'session': current_session
+		}
+
+		if 'house' in link.lower():
+			doc_data['chamber'] = 'H'
+		elif 'senate' in link.lower():
+			doc_data['chamber'] = 'S'
+
+		if 'member' in link.lower() or 'roster' in link.lower():
+			doc_data['name'] = '{} Roster'.format(doc_data['chamber'])
+		elif 'bill' in link.lower():
+			doc_data['name'] = '{} bills'.format(doc_data['chamber'])
+
+		if doc_data['chamber'] == 'H':
+			doc_data['file_name'] = '{0}/{1}.html'.format(h_dir, doc_data['name'].replace(' ', '_'))
+		elif doc_data['chamber'] == 'S':
+			doc_data['file_name'] = '{0}/{1}.html'.format(s_dir, doc_data['name'].replace(' ', '_'))
+
+		get_or_create_source_doc(**doc_data)
+		
 print 'fin.'
 	
