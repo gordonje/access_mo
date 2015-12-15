@@ -66,7 +66,9 @@ JOIN election_type
 ON election_type_id = election_type.id
 WHERE chamber_id = 'S'
 -- excluding special elections, these need to be handled separately
-AND election.election_type_id <> 'S';
+AND election.election_type_id <> 'S'
+-- exclude the most recent assembly so that we aren't projecting into the future
+AND assembly_member.assembly_id < (SELECT max(id) FROM assembly);
 
 
 -- Jack Goodman was elected to Senate District 29 in Nov. 2005, making sure he is added to the 94th Assembly

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from models import *
-from model_helpers import parse_name, get_or_create_person
+from model_helpers import parse_name, get_or_create_person, get_party
 from requests import session
 from bs4 import BeautifulSoup
 from time import sleep
@@ -37,7 +37,7 @@ with session() as r_sesh:
 	# request the first page
 	response = r_sesh.get(url)
 
-	soup = BeautifulSoup(response.content, 'lxml')
+	soup = BeautifulSoup(response.content, 'html5lib')
 
 	# grab the VIEWSTATE variable
 	view_state = soup.select("#__VIEWSTATE")[0]['value']
@@ -107,7 +107,7 @@ with session() as r_sesh:
 		# 	save_file.write(response.content)
 
 		# parse response
-		soup = BeautifulSoup(response.content, 'lxml')
+		soup = BeautifulSoup(response.content, 'html5lib')
 
 		# loop over the rows in the electtable...
 		for tr in soup.find('table', class_ = 'electtable').find_all('tr')[1:]:
@@ -151,7 +151,7 @@ with session() as r_sesh:
 				# append a new candidate to the race's candidate list
 				race.candidates.append(Race_Candidate(
 					  raw_name = tds[0].text.replace('  ', ' ').strip()
-					, party = tds[1].text.strip()
+					, party = get_party(tds[1].text.strip())
 					, votes = tds[2].text.strip().replace(',', '')
 					, pct_votes = tds[3].text.replace('%', '').strip()
 				))
@@ -184,9 +184,17 @@ for election in elections:
 
 		# ignore races with types we don't recognize
 		if race.race_type_id != None:
-			# for now, only focus on the state legislative races
-			if 'State Senator' in race.race_type.name or 'State Representative' in race.race_type.name:
-
+			
+			# for now, ignore judicial races, propositions and constitutional amendments
+			if race.race_type.name not in [
+				  'Constitutional Amendment'
+				, 'Proposition'
+				, 'Court of Appeals'
+				, 'Missouri Supreme Court'
+				, 'Circuit Judge'
+				, 'Assoc. Circuit Judge'
+				, 'U.S. President And Vice President'
+			]:
 				race.election = election.id
 
 				print '  {}, District # {}'.format(election.election_date, race.district)
