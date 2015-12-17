@@ -62,10 +62,10 @@ def parse_name(name_string):
 		  , 'regex': re.compile(r'^{first}\s+{last}\s+\({district}\){etal}?$'.format(**patterns))
 		  }
 		, { 'description': 'last, Dr.? first middle? nickname? (district?)'
-		  ,	'regex': re.compile(r'^{last},(?:\s+Dr\.)?\s+{first}(?:\s+{mid})?(?:\s+{nick})?\s+\({district}?\)$'.format(**patterns))
+		  , 'regex': re.compile(r'^{last},(?:\s+Dr\.)?\s+{first}(?:\s+{mid})?(?:\s+{nick})?\s+\({district}?\)$'.format(**patterns))
 		  }
 		, { 'description': 'last, first mi (district)etal?'
-		  ,	'regex': re.compile(r'^{last},\s+{first}\s+(?P<middle_name>{initials})\s+\({district}\)?{etal}?$'.format(**patterns))
+		  , 'regex': re.compile(r'^{last},\s+{first}\s+(?P<middle_name>{initials})\s+\({district}\)?{etal}?$'.format(**patterns))
 		  }
 		, { 'description': 'first middle last suffix'
 		  , 'regex': re.compile(r'^{first}\s{mid}\s{last}?\s{suf}$'.format(**patterns))
