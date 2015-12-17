@@ -77,7 +77,10 @@ with requests.session() as requests_session:
 										fn.lower(Source_Doc.url).contains('billlist')
 									) 
 								) |
-								( (Source_Doc.chamber == 'S') & Source_Doc.name.contains('List of Senate Bills') )
+								( (Source_Doc.chamber == 'S') & (
+										Source_Doc.name.contains('List of Senate Bills') |
+										Source_Doc.name == 'S bills'
+									)
 							):
 
 			print ' Getting bill links for {0} {1}...'.format(
