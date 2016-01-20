@@ -3,11 +3,12 @@
 import os
 from models import *
 from model_helpers import parse_name, get_or_create_person, get_party
+from model_helpers import get_or_create_source_doc
 import re
 import io
 import inspect
 
-f_path = 'past_content/SoS/election_results/txts/'
+f_path = 'source_docs/SoS/election_results/txts/'
 
 # select the race_types into a list of matching purposes
 race_types = []
@@ -32,10 +33,22 @@ for i in os.listdir(f_path):
 
 		# set up an election for each file
 		election = Election(
-			  file_name = f_path + i
-			, date = None
+			  date = None
 			, races = []
 		)
+
+		# this particular election was not available in pdf
+		# had to copy the text from the 2001 Blue Book
+		if i == 'AllRacesSpecialMarch2000SD5.txt':
+			election.source_doc = get_or_create_source_doc(
+					  name = 'All Races Special March 2000 SD5'
+					, file_name = f_path + i
+					, url = 'http://s1.sos.mo.gov/cmsimages/bluebook/2001-2002/0711-0717.pdf#p715'
+					, parent = None
+				)
+		else:
+			source_doc_file = f_path + i
+			election.source_doc = Source_Doc.get(Source_Doc.file_name == source_doc_file.replace('txt', 'pdf'))
 
 		# determine which type of election it is (based on file name)
 		for elec_type in Election_Type.select():

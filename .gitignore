@@ -59,8 +59,9 @@ target/
 # Added by JG
 .DS_Store
 config.py
-past_content/*
+source_docs/*
 csvs/*
 test.py
 notes.txt
 candidates.txt
+master*.py

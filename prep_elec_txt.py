@@ -3,7 +3,7 @@ import re
 import io
 import os
 
-base_path = 'past_content/SoS/election_results/'
+base_path = 'source_docs/SoS/election_results/'
 
 if not os.path.exists(base_path + 'txts/'):
 	os.makedirs(base_path + 'txts/')

@@ -11,12 +11,27 @@ tables = []
 with open('record_layouts/tables.tsv', 'rU') as f:
 	reader = DictReader(f, delimiter='\t')
 
+	# find the Model name in the list of global vars and add it to the list of tables
 	for row in reader:
 		tables.append(globals()[row['table'].title()])
 
 db.create_tables(tables, True)
 
 # inserting all the look-up records.
+
+with open('look_ups/sources.csv', 'rU') as f:
+	reader = DictReader(f)
+
+	for row in reader:
+		
+		try:
+			with db.atomic():
+				Source.create(**row)
+		except Exception as e:
+			if 'duplicate' in e.message:
+				pass
+			else:
+				print e
 
 with open('look_ups/assemblies.csv', 'rU') as f:
 	reader = DictReader(f)
@@ -50,15 +65,21 @@ past_session_urls = [
 	{
 		  'url': 'http://www.house.mo.gov/sitemap.aspx?pid=24'
 		, 'name': 'Past House Sessions'
-		, 'chamber': 'H'
+		, 'source': 'H'
 		, 'file_name': 'Need to regularly check: http://www.house.mo.gov/sitemap.aspx?pid=24'
 	}
 	, { 
 		  'url': 'http://www.senate.mo.gov/pastsessions.htm'
 		, 'name': 'Past Senate Sessions'
-		, 'chamber': 'S'
+		, 'source': 'S'
 		, 'file_name': 'Need to regularly check: http://www.senate.mo.gov/pastsessions.htm'
 	  }
+	, {
+		  'url': 'http://s1.sos.mo.gov/elections/resultsandstats/previousElections'
+		, 'name': 'Past SoS election results'
+		, 'source': 'SoS'
+		, 'file_name': 'Need to regularly check http://s1.sos.mo.gov/elections/resultsandstats/previousElections'
+	}
 ]
 
 for url in past_session_urls:

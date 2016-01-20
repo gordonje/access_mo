@@ -16,8 +16,8 @@ def get_content(source_doc_obj, requests_session):
 			content = f.read()
 	except:
 		print '   No file found. Downloading from {}'.format(source_doc_obj.url)
-		sleep(3)
-		response = requests_session.get(source_doc_obj.url)
+		sleep(4)
+		response = requests_session.get(source_doc_obj.url, timeout=(3.05, 27))
 		response.raise_for_status()
 		content = response.content
 

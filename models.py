@@ -6,23 +6,33 @@ from sys import argv
 from getpass import getpass
 from playhouse.postgres_ext import *
 
-
 ########## Set up database connection ##########
 
 try:
-	db_name = argv[1]
-except IndexError:
-	db_name = raw_input('Enter db name:')
-try:
-	db_user = argv[2]
-except IndexError:
-	db_user = raw_input('Enter db user name:')
-try:
-	db_password = argv[3]
-except IndexError:
-	db_password = getpass('Enter db user password:')
+	# try getting db connection parameters from the settings file
+	from settings import database
+except ImportError:
+	# if it isn't set up yet, look for user provided arguments
+	database = {}
 
-db = PostgresqlExtDatabase(db_name, user=db_user, password=db_password, register_hstore = False)
+	try:
+		database['db_name'] = argv[1]
+	except IndexError:
+		database['db_name'] = raw_input('Enter db name:')
+	try:
+		database['user'] = argv[2]
+	except IndexError:
+		database['user'] = raw_input('Enter db user name:')
+	try:
+		database['password'] = argv[3]
+	except IndexError:
+		database['password'] = getpass('Enter db user password:')
+
+db = PostgresqlExtDatabase(
+	  database['db_name']
+	, user=database['user']
+	, password=database['password']
+	, register_hstore = False)
 db.connect()
 
 ################################################
@@ -30,6 +40,32 @@ db.connect()
 class BaseModel(Model):
 	class Meta:
 		database = db
+
+
+class Source(BaseModel):
+	id = CharField(primary_key = True, max_length = 3, help_text = 'Primary key (e.g., "H", "S", "SoS").')
+	name = CharField(help_text = 'Full name of the data source.')
+	url = CharField(null = True, help_text = 'URL of the given source.')
+
+
+class Source_Doc(BaseModel):
+	source = ForeignKeyField(Source, help_text = 'Foreign key referencing the source of the documents.')
+	name = CharField(help_text = 'Text labeling the link to the source doc.')
+	url = CharField(help_text = 'Link to the source doc.')
+	scheme = CharField(help_text = 'Parsed from the url.')
+	netloc = CharField(help_text = 'Parsed from the url.')
+	path = CharField(help_text = 'Parsed from the url.')
+	params = CharField(null = True, help_text = 'Parsed from the url.')
+	query = CharField(null = True, help_text = 'Parsed from the url.')
+	fragment = CharField(null = True, help_text = 'Parsed from the url.')
+	file_name = CharField(unique = True, help_text = 'File name and path for local copy of the source doc.')
+	parent = ForeignKeyField('self', null = True, related_name = 'children', help_text = 'Foreign key referencing the other source doc that includes the link to this source doc')
+	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
+
+	# class Meta:
+	# 	indexes = (
+	# 		(('url', 'parent', 'file_name'), True),
+	# 	)
 
 
 class Assembly(BaseModel):
@@ -52,6 +88,7 @@ class Session(BaseModel):
 	session_type = ForeignKeyField(Session_Type, help_text = 'Foreign key referencing the type of session (either "Regular" or "Extraordinary").')
 	year_type_ord = IntegerField(default = 1, help_text = 'Indicates the order of the session in cases where multiple sessions of the same type occurred in the same year (mostly relevant to Extraordinary sessions).')
 	name = CharField(help_text = 'Name of the session as labeled on the House or Senate clerk website.')
+	is_current = BooleanField(default = False, help_text = 'When True, indicates if the given session is the current one.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:
@@ -66,27 +103,6 @@ class Chamber(BaseModel):
 	title = CharField(help_text = 'Either "Rep." or "Sen.".')
 	full_title = CharField(help_text = 'Either "Representative" or "Senator".')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
-
-
-class Source_Doc(BaseModel):
-	name = CharField(help_text = 'Text labeling the link to the source doc.')
-	session = ForeignKeyField(Session, null = True, related_name = 'source_docs', help_text = 'Foreign key referencing the session under which the source doc was found.')
-	chamber = ForeignKeyField(Chamber, help_text = 'Foreign key referencing the legislative chamber website from which the source doc was collected.')
-	url = CharField(help_text = 'Link to the source doc.')
-	scheme = CharField(help_text = 'Parsed from the url.')
-	netloc = CharField(help_text = 'Parsed from the url.')
-	path = CharField(help_text = 'Parsed from the url.')
-	params = CharField(null = True, help_text = 'Parsed from the url.')
-	query = CharField(null = True, help_text = 'Parsed from the url.')
-	fragment = CharField(null = True, help_text = 'Parsed from the url.')
-	file_name = CharField(help_text = 'File name and path for local copy of the source doc.')
-	parent = ForeignKeyField('self', null = True, related_name = 'children', help_text = 'Foreign key referencing the other source doc that includes the link to this source doc')
-	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
-
-	class Meta:
-		indexes = (
-			(('url', 'parent', 'file_name'), True),
-		)
 
 
 class Person(BaseModel):
@@ -146,6 +162,7 @@ class Election(BaseModel):
 	election_type = ForeignKeyField(Election_Type, related_name = 'elections', help_text = 'Foreign key referencing the type of election (General, Primary or Special).')
 	file_name = CharField(null = True, help_text = 'File path and name of a local copy of the text file of the election results.')
 	assembly = ForeignKeyField(Assembly, null = True, related_name = 'elections', help_text = "Foreign key field referencing the assembly to which the legislative race candidates were elected.")
+	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key referencing the SoS election results.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 class Party(BaseModel):
@@ -209,7 +226,7 @@ class Member_Session_Profile(BaseModel):
 	session = ForeignKeyField(Session, related_name = 'member_profiles', help_text = 'Foreign key referencing the session in which the member was profiled.')
 	raw_name = CharField(help_text = 'Name of the legislator as it appears on the Legislator Roster page.')
 	party = ForeignKeyField(Party, null = True)
-	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key representing the House or Senate clerk lawmaker details page.')
+	source_doc = ForeignKeyField(Source_Doc, help_text = 'Foreign key referencing the House or Senate clerk lawmaker details page.')
 	created_date = DateTimeField(default = datetime.now, help_text = 'Date and time the record was inserted into the database.')
 
 	class Meta:

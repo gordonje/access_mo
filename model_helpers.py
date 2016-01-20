@@ -5,6 +5,28 @@ from models import *
 import re
 from urlparse import urlparse, urlunparse
 
+def select_w_all(Model, **kwargs):
+	""" Takes a model and keyword arguments.
+		Selects for instances of the model where all kwarg values exist.
+		Returns all instances or None.
+	"""
+
+	results = None
+
+	model.select()
+
+	for k in kwargs:
+		if k in Source_Doc._meta.get_field_names():
+			q = q.where(Source_Doc._meta.fields[k] == kwargs[k])
+
+	if q.count() == 0:
+		print 'No {} found.'.format(model._meta.name)
+	else:
+		results = q.execute()
+
+	return results
+
+
 def normalize_name_fields(name_dict):
 	""" Takes a dict of name fields.
 		Strips leading and trailing whitespace from each field.
@@ -54,6 +76,7 @@ def parse_name(name_string):
 		, 'etal': r'\.+et\s*al\.'
 	}
 
+	# Stricter formats should be ordered higher in this list.
 	formats = [
 		  { 'description': 'first last, District ##'
 		  , 'regex': re.compile(r'^{first}\s{last},\sDistrict\s{district}$'.format(**patterns))
@@ -67,8 +90,8 @@ def parse_name(name_string):
 		, { 'description': 'last, first mi (district)etal?'
 		  , 'regex': re.compile(r'^{last},\s+{first}\s+(?P<middle_name>{initials})\s+\({district}\)?{etal}?$'.format(**patterns))
 		  }
-		, { 'description': 'first middle last suffix'
-		  , 'regex': re.compile(r'^{first}\s{mid}\s{last}?\s{suf}$'.format(**patterns))
+		, { 'description': 'first middle last suffix?'
+		  , 'regex': re.compile(r'^{first}\s{mid}\s{last}\s{suf}?$'.format(**patterns))
 		  }
 		, { 'description': 'first last,? suffix'
 		  , 'regex': re.compile(r'^{first}\s{last},?\s{suf}$'.format(**patterns)) 
@@ -76,8 +99,8 @@ def parse_name(name_string):
 		, { 'description': 'Dr.? first middle? nickname? last,? suffix?'
 		  , 'regex': re.compile(r'^(?:Dr\.\s)?{first}(?:\s{mid})?(?:\s{nick})?\s{last}(?:,?\s{suf})?(?:,?\sM\.?D\.?)?$'.format(**patterns)) 
 		  }
-		, { 'description': 'first mi? last'
-		  , 'regex': re.compile(r'^{first}(?:\s(?P<middle_name>{initials}))?\s{last}$'.format(**patterns)) 
+		, { 'description': 'first mi last'
+		  , 'regex': re.compile(r'^{first}\s(?P<middle_name>{initials})\s{last}$'.format(**patterns)) 
 		  }
 		, { 'description': 'last,? suffix?, first middle? nickname?'
 		  , 'regex': re.compile(r'^{last}(?:,?\s{suf})?,\s{first}(?:\s{mid})?(?:\s{nick})?$'.format(**patterns))
@@ -85,14 +108,17 @@ def parse_name(name_string):
 		, { 'description': 'last,? suffix?, first nickname? middle?'
 		  , 'regex': re.compile(r'^{last}(?:,?\s{suf})?,\s{first}(?:\s{nick})?(?:\s{mid})?$'.format(**patterns))
 		  }
-		, { 'description': 'last ?, first nickname? middle? suffix?'
-		  , 'regex': re.compile(r'^{last}\s?,\s{first}(?:\s{nick})?(?:\s{mid})?(?:\s{suf})?$'.format(**patterns))
+		, { 'description': 'last ?, first nickname? middle? suffix'
+		  , 'regex': re.compile(r'^{last}\s?,\s{first}(?:\s{nick})?(?:\s{mid})?\s{suf}$'.format(**patterns))
 		  }
 		, { 'description': 'last, fi nickname? middle? suffix?'
 		  , 'regex': re.compile(r'^{last},\s(?P<first_name>{initials})(?:\s{nick})?(?:\s{mid})?(?:\s{suf})?$'.format(**patterns))
 		  }
-		, { 'description': 'last, first middle ?nickname'
-		  , 'regex': re.compile(r'^{last},\s{first}\s{mid}\s?{nick}$'.format(**patterns))
+		, { 'description': 'last, first middle? nickname? suffix?'
+		  , 'regex': re.compile(r'^{last},\s{first}(?:\s{mid})?(?:\s{nick})?(?:\s{suf})?$'.format(**patterns))
+		  }
+		, { 'description': 'last, first middle nickname'
+		  , 'regex': re.compile(r'^{last},\s{first}\s{mid}{nick}$'.format(**patterns))
 		  }
 		, { 'description': 'last, first mi'
 		  , 'regex': re.compile(r'^{last},\s{first}\s(?P<middle_name>{initials})$'.format(**patterns))
@@ -117,11 +143,28 @@ def parse_name(name_string):
 
 		name_match = re.match(i['regex'], name_string)
 		
-		if name_match != None: 
-			results['success'] = True
-			results['match_pattern'] = i['description']
-			results['name_dict'] = normalize_name_fields(name_match.groupdict())
-			break
+		if name_match != None:
+
+			name_dict = normalize_name_fields(name_match.groupdict())
+
+			# check to see if the suffix ended up in the middle name field
+			for k, v in name_dict.iteritems():
+				if k != 'name_suffix':
+					if re.search(r'[^\s]{suf}[\s$]'.format(**patterns), name_dict[k]) != None:
+						print i['description']
+						print 'Found suffix in {}'.format(k)
+						if len(name_dict[k]) > 1:
+							pass
+						else:
+							results['success'] = True
+							results['match_pattern'] = i['description']
+							results['name_dict'] = name_dict
+						break
+				else:
+					results['success'] = True
+					results['match_pattern'] = i['description']
+					results['name_dict'] = name_dict
+					break
 
 	if results['success'] == False:
 		print 'Could not parse string: {}'.format(name_string)
@@ -164,7 +207,7 @@ def match_person(first_name = '', middle_name = '', last_name = '', name_suffix 
 				 )
 			)
 	
-	# check to see if amiddle name value was provided
+	# check to see if a middle name value was provided
 	if len(middle_name) > 0:
 
 		# check to see if only a middle initial was provided
@@ -181,12 +224,23 @@ def match_person(first_name = '', middle_name = '', last_name = '', name_suffix 
 			 		 )
 				)
 		else:
-			# exact match for first, last and suffix and first char of provided middle matches stored middle
+			# exact match for first, middle last and suffix
 			qs_to_run.append(
 				Person.select(
 					 ).where(
 						  (Person.first_name == first_name)
 						& (Person.middle_name == middle_name)
+						& (Person.last_name == last_name)
+						& (Person.name_suffix == name_suffix)
+					 )
+				)
+
+			# exact match for first, last and suffix and first char of provided middle matches stored middle
+			qs_to_run.append(
+				Person.select(
+					 ).where(
+						  (Person.first_name == first_name)
+						& (Person.middle_name == middle_name[0])
 						& (Person.last_name == last_name)
 						& (Person.name_suffix == name_suffix)
 					 )
@@ -219,6 +273,17 @@ def match_person(first_name = '', middle_name = '', last_name = '', name_suffix 
 			Person.select(
 				 ).where(
 					  (Person.first_name == middle_name)
+					& (Person.last_name == last_name)
+					& (Person.name_suffix == name_suffix)
+				 )
+			)
+
+		# exact match for first, last and suffix, no stored middle
+		qs_to_run.append(
+			Person.select(
+				 ).where(
+					  (Person.first_name == first_name)
+					& (Person.middle_name == '')
 					& (Person.last_name == last_name)
 					& (Person.name_suffix == name_suffix)
 				 )
@@ -381,18 +446,25 @@ def get_or_create_person(name_dict):
 					  person = results['person']
 					, **name_dict
 				)
-	
-	if results['new_person_name']:
 
+		# if the person's middle name is only one char...
 		if len(results['person'].middle_name) <= 1:
+			# and the new middle name is more than one char...
 			if len(new_name.middle_name) > 1:
+				# update the person's middle name
 				results['person'].middle_name = new_name.middle_name
 				results['person'].save()
+		# might need to reconsider this...
+		# what if the middle initial is more current than the provided full middle name?
 
+		# if the person doesn't currently have a nickname...
 		if results['person'].nickname == '':
+			# and the new name does...
 			if new_name.nickname != '':
+				# update the person's nickname
 				results['person'].nickname = new_name.nickname
 				results['person'].save()
+		
 		# might need to figure out how to preserve the formal name in Person.first_name
 		# and the "full" last name in Person.last_name
 
@@ -401,34 +473,27 @@ def get_or_create_person(name_dict):
 
 def get_or_create_source_doc(**kwargs):
 	""" Takes keyword arguments.
-		Tries to select an existing source_doc.
+		Tries to select an existing source_doc (using the file_name).
 		If there isn't one, creates a new source doc.
 		Returns a source doc object.
 	"""
 
-	source_doc = None
-
 	try:
-		source_doc = Source_Doc.select().where(
-					  Source_Doc.file_name == kwargs['file_name']
-					, Source_Doc.url == kwargs['url']
-					, Source_Doc.parent == kwargs['parent']
-			   ).get()
+		source_doc = Source_Doc.get(Source_Doc.file_name == kwargs['file_name'])
 	except Source_Doc.DoesNotExist:
 		with db.atomic():
 			source_doc = Source_Doc.create(
-						  chamber = kwargs['chamber']
+						  source = kwargs['source']
+						, name = kwargs['name']
+						, file_name = kwargs['file_name']
+						, url = kwargs['url']
 						, scheme = urlparse(kwargs['url']).scheme
 						, netloc = urlparse(kwargs['url']).netloc
 						, path = urlparse(kwargs['url']).path
 						, params = urlparse(kwargs['url']).params
 						, query = urlparse(kwargs['url']).query
 						, fragment = urlparse(kwargs['url']).fragment
-						, url = kwargs['url']
-						, name = kwargs['name']
-						, file_name = kwargs['file_name']
 						, parent = kwargs['parent']
-						, session = kwargs['session']
 			)
 	except Exception as e:
 		print 'Could not create or get source doc.'
@@ -462,6 +527,8 @@ def get_party(party_string):
 			party = None
 
 	return party
+
+# def get_or_create_session?
 
 
 # def get_assembly_member(first_initial, last_name, assembly, chamber, district):

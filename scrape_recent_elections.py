@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from models import *
-from model_helpers import parse_name, get_or_create_person, get_party
+from model_helpers import parse_name, get_or_create_person, get_party, get_or_create_source_doc
 from requests import session
 from bs4 import BeautifulSoup
 from time import sleep
@@ -44,7 +44,7 @@ with session() as r_sesh:
 
 	# for each option in the elections dropdown...
 	for opt in soup.find('select', id = 'MainContent_cboElectionNames').find_all('option'):
-		
+
 		spl_txt = opt.text.split(' - ')
 
 		# set up a new election
@@ -53,6 +53,15 @@ with session() as r_sesh:
 				, election_date = spl_txt[-1].strip()
 				, opt_value = opt['value']
 				, races = []
+			)
+
+		# get or create the source doc for the election
+		election.source_doc = get_or_create_source_doc(
+				  source = 'SoS'
+				, name = election.name
+				, file_name = 'source_docs/SoS/election_results/html/{}.html'.format(election.name.replace('-', '').replace(',', '').replace(' ', '_').replace('__', '_'))
+				, url = 'http://enrarchives.sos.mo.gov/enrnet/Default.aspx?eid={}'.format(election.opt_value)
+				, parent = None
 			)
 
 		# check each election type...
@@ -80,34 +89,37 @@ with session() as r_sesh:
 	# go back over each collected election
 	for election in elections:
 
-		# pause between requests
-		sleep(3)
+		# try opening the local html file
+		try:
+			with open(election.source_doc.file_name, 'r') as f:
+				content = f.read()
+		except:
+			print '   No file found.'
+			print '   Requesting results from {}'.format(election.name)
+			
+			# if there isn't one, wait, then request it
+			sleep(3)
+			response = r_sesh.post(
+				  url
+				, data = {
+					  'ctl00$sm1': 'ctl00$MainContent$UpdatePanel1|ctl00$MainContent$btnElectionType'
+					, '__EVENTTARGET': ''
+					, '__EVENTARGUMENT': ''
+					, 'ctl00$MainContent$cboElectionNames': election.opt_value
+					, '__ASYNCPOST': 'true'
+					, 'ctl00$MainContent$btnElectionType': 'Submit'
+					, '__VIEWSTATE': view_state
+				}
+			)
+			
+			content = response.content
 
-		print '    Requesting results from {}'.format(election.name)
-
-		# make a requeest with the election dropdown value
-		response = r_sesh.post(
-			  url
-			, data = {
-				  'ctl00$sm1': 'ctl00$MainContent$UpdatePanel1|ctl00$MainContent$btnElectionType'
-				, '__EVENTTARGET': ''
-				, '__EVENTARGUMENT': ''
-				, 'ctl00$MainContent$cboElectionNames': election.opt_value
-				, '__ASYNCPOST': 'true'
-				, 'ctl00$MainContent$btnElectionType': 'Submit'
-				, '__VIEWSTATE': view_state
-			}
-		)
-
-		# for saving local copies...
-
-		# file_name = election.name.replace('-', '').replace(',', '').replace(' ', '_').replace('__', '_')
-
-		# with open(file_name + '.html', 'w') as save_file:
-		# 	save_file.write(response.content)
+			# then save a local copy of the html file
+			with open(election.source_doc.file_name, 'w') as f:
+				f.write(content)
 
 		# parse response
-		soup = BeautifulSoup(response.content, 'html5lib')
+		soup = BeautifulSoup(content, 'html5lib')
 
 		# loop over the rows in the electtable...
 		for tr in soup.find('table', class_ = 'electtable').find_all('tr')[1:]:
