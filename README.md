@@ -60,7 +60,7 @@ The final setup step is to run [load_names.py](https://github.com/gordonje/acces
 Person De-Duping
 ----------------
 
-A lot of the data we're collecting describes actions of specific people -- when they ran for elected office, which legislative districts they've represented, bills they've sponsored and how they voted for each bill.
+A lot of the data we're collecting describes actions of specific people: when they ran for elected office, which legislative districts they've represented, bills they've sponsored and how they voted for each bill.
 
 As is, this data doesn't include clear a representation of distinct persons. All we have to go on are person names and sometimes the chambers and districts with which they are associated. But this info comes to us in strings that take a variety of formats, even in documents coming from the same source. For example:
 
@@ -88,13 +88,13 @@ parse_name() returns a dictionary with the following key/values:
 
 ### Person Matching
 
-With the name strings parsed, we can more match a name to any person record we may already have.
+With the name strings parsed, we can more precisely match a name to any person record we may already have.
 
 The [`match_person()`](https://github.com/gordonje/access_mo/blob/master/model_helpers.py#L133) function in model_helpers.py takes the parsed name fields as its arguments, then queries to find an existing person with same combination of name field values.
 
 Actually, `match_person()` runs as many as many as 10 queries in order to compensate for inconsistencies in the name formats and `parse_name()` results. As soon as one of the queries returns only one person record, match_person() returns that Person object with a found value of `True`. If none of the queries return only one result, it returns `False`.
 
-Luckily with this data set, we're dealing with a relatively small number of distinct persons: At most, only about 3,000. So our matching rules can be rather liberal in terms of combining similar records. For the more ambiguous cases, we've added queries to check for case when we might incorrectly conflated records.
+Luckily with this data set, we're dealing with a relatively small number of distinct persons: At most, only about 3,000. So our matching rules can be rather liberal in terms of combining similar records. For the more ambiguous cases, we've added queries to check for case when we might have incorrectly conflated records.
 
 The specific duplicate scenarios we're accounting for are:
 
@@ -301,7 +301,7 @@ Access Missouri currently includes legislative data from each session going back
 
 The House and Senate Clerks have two distinct websites that publish this information.
 
-Here are the current commands to run (in order:
+Here are the current commands to run (in order):
 
 1.	Run get_past_sessions.py
 2.	Run get_lawmaker_profiles.py
